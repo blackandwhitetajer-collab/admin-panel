@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة إدارة العقارات</title>
+    <style>
+        :root { --primary: #2563eb; --danger: #dc2626; --success: #16a34a; --bg: #f8fafc; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* شاشة كلمة السر */
+        #login-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-box { background: #fff; padding: 30px; border-radius: 12px; text-align: center; width: 300px; }
+        .login-box input { width: 90%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 6px; }
+        
+        /* كروت العقارات */
+        .property-card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; }
+        .grid-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .field { display: flex; flex-direction: column; }
+        .field label { font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: bold; }
+        .field input, .field textarea { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+        
+        /* معرض الصور */
+        .gallery-title { font-weight: bold; margin-bottom: 10px; display: block; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .img-card { position: relative; border-radius: 8px; overflow: hidden; border: 2px solid #e2e8f0; background: #000; }
+        .img-card.hero { border-color: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }
+        .img-card img { width: 100%; height: 100px; object-fit: cover; display: block; opacity: 0.9; }
+        .badge-hero { position: absolute; top: 4px; right: 4px; background: #f59e0b; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .img-actions { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: space-around; padding: 4px; }
+        .img-btn { background: none; border: none; color: #fff; cursor: pointer; font-size: 12px; }
+
+        /* الأزرار العامة */
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-add-img { background: #e0e7ff; color: #3730a3; border: 1px dashed #6366f1; padding: 10px; border-radius: 8px; cursor: pointer; text-align: center; font-size: 13px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<!-- شاشة تسجيل الدخول البسيطة -->
+<div id="login-modal">
+    <div class="login-box">
+        <h3>لوحة تحكم العقارات</h3>
+        <input type="password" id="pass-input" placeholder="أدخل كلمة السر">
+        <button class="btn btn-primary" onclick="checkAuth()">دخول</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h2>إدارة العقارات والوحدات</h2>
+        <button class="btn btn-danger" onclick="logout()">خروج</button>
+    </div>
+
+    <!-- قائمة العقارات -->
+    <div id="properties-list">
+        <!-- سيتم تحميل العقارات هنا تلقائياً -->
+    </div>
+</div>
+
+<script>
+    // 🔗 غيري هذه الروابط لروابط n8n Webhooks الخاصة بكِ (التجريبية حالياً)
+    const N8N_FETCH_URL = 'https://YOUR_N8N_INSTANCE/webhook/get-properties';
+    const N8N_UPDATE_URL = 'https://YOUR_N8N_INSTANCE/webhook/update-property';
+    const N8N_DELETE_URL = 'https://YOUR_N8N_INSTANCE/webhook/delete-property';
+    const N8N_UPLOAD_IMG_URL = 'https://YOUR_N8N_INSTANCE/webhook/upload-image';
+
+    const PASSWORD_SECRET = "Client@2026"; // كلمة السر للبساطة
+
+    function checkAuth() {
+        const input = document.getElementById('pass-input').value;
+        if(input === PASSWORD_SECRET) {
+            sessionStorage.setItem('auth', 'true');
+            document.getElementById('login-modal').style.display = 'none';
+            loadProperties();
+        } else {
+            alert('كلمة السر غير صحيحة!');
+        }
+    }
+
+    if(sessionStorage.getItem('auth') === 'true') {
+        document.getElementById('login-modal').style.display = 'none';
+        window.onload = loadProperties;
+    }
+
+    function logout() {
+        sessionStorage.removeItem('auth');
+        location.reload();
+    }
+
+    // جلب العقارات من n8n
+    async function loadProperties() {
+        const container = document.getElementById('properties-list');
+        container.innerHTML = '<p style="text-align:center;">جاري تحميل العقارات...</p>';
+        
+        try {
+            const res = await fetch(N8N_FETCH_URL);
+            const data = await res.json();
+            renderProperties(data);
+        } catch(e) {
+            container.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ أثناء تحميل البيانات.</p>';
+        }
+    }
+
+    // عرض العقارات وتنسيق الصور
+    function renderProperties(list) {
+        const container = document.getElementById('properties-list');
+        container.innerHTML = '';
+
+        list.forEach(prop => {
+            // تفكيك روابط الصور من الخلية الوحيدة
+            const rawImages = prop['رابط الصور'] ? prop['رابط الصور'].split(',').map(s => s.trim()).filter(Boolean) : [];
+            
+            let imagesHTML = rawImages.map((url, index) => `
+                <div class="img-card ${index === 0 ? 'hero' : ''}">
+                    ${index === 0 ? '<span class="badge-hero">الهيرو الرئيسية</span>' : ''}
+                    <img src="${url}" alt="صورة العقار">
+                    <div class="img-actions">
+                        ${index !== 0 ? `<button class="img-btn" onclick="makeHero('${prop['كود الوحدة']}', '${url}')" title="اجعلها صورة هيرو">⭐</button>` : ''}
+                        <button class="img-btn" onclick="deleteImage('${prop['كود الوحدة']}', '${url}')" title="حذف الصورة">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const card = document.createElement('div');
+            card.className = 'property-card';
+            card.innerHTML = `
+                <div class="card-header">
+                    <h3>كود الوحدة: ${prop['كود الوحدة'] || ''}</h3>
+                    <div>
+                        <button class="btn btn-primary" onclick="saveProperty('${prop['كود الوحدة']}')">حفظ التعديلات 💾</button>
+                        <button class="btn btn-danger" onclick="deleteProperty('${prop['كود الوحدة']}')">حذف العقار ❌</button>
+                    </div>
+                </div>
+
+                <div class="grid-fields">
+                    <div class="field"><label>السعر الإجمالي</label><input type="text" id="price-${prop['كود الوحدة']}" value="${prop['السعر الإجمالي'] || ''}"></div>
+                    <div class="field"><label>المقدم</label><input type="text" id="deposit-${prop['كود الوحدة']}" value="${prop['المقدم'] || ''}"></div>
+                    <div class="field"><label>المنطقة</label><input type="text" id="area-${prop['كود الوحدة']}" value="${prop['المنطقة'] || ''}"></div>
+                    <div class="field"><label>المساحة</label><input type="text" id="space-${prop['كود الوحدة']}" value="${prop['المساحة'] || ''}"></div>
+                    <div class="field"><label>عدد الغرف</label><input type="text" id="rooms-${prop['كود الوحدة']}" value="${prop['عدد الغرف'] || ''}"></div>
+                    <div class="field"><label>نوع الوحدة</label><input type="text" id="type-${prop['كود الوحدة']}" value="${prop['نوع الوحدة'] || ''}"></div>
+                </div>
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <label>الوصف التسويقي</label>
+                    <textarea id="desc-${prop['كود الوحدة']}" rows="3">${prop['الوصف التسويقي'] || ''}</textarea>
+                </div>
+
+                <span class="gallery-title">معرض الصور (الصورة الأولى هي صورة الهيرو بالموقع):</span>
+                <div class="gallery-grid" id="gallery-${prop['كود الوحدة']}">
+                    ${imagesHTML}
+                </div>
+
+                <div class="btn-add-img" onclick="triggerImageUpload('${prop['كود الوحدة']}')">
+                    ➕ إضافة صورة جديدة لهذا العقار
+                </div>
+                <input type="file" id="file-input-${prop['كود الوحدة']}" style="display:none" onchange="uploadImage(event, '${prop['كود الوحدة']}')">
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // إرسال طلب تحويل صورة إلى صورة هيرو
+    async function makeHero(code, imageUrl) {
+        if(!confirm('هل تريد جعل هذه الصورة هي الصورة الرئيسية (الهيرو)؟')) return;
+        await sendToN8N(N8N_UPDATE_URL, { action: 'make_hero', code, imageUrl });
+        loadProperties();
+    }
+
+    // إرسال طلب حذف صورة
+    async function deleteImage(code, imageUrl) {
+        if(!confirm('هل أنت تأكد من حذف هذه الصورة؟')) return;
+        await sendToN8N(N8N_UPDATE_URL, { action: 'delete_image', code, imageUrl });
+        loadProperties();
+    }
+
+    // رفع صورة جديدة لـ Cloudinary عبر n8n
+    function triggerImageUpload(code) {
+        document.getElementById(`file-input-${code}`).click();
+    }
+
+    async function uploadImage(event, code) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('code', code);
+        formData.append('action', 'add_image');
+
+        alert('جاري رفع الصورة إلى Cloudinary وتحديث الشيت...');
+        
+        await fetch(N8N_UPLOAD_IMG_URL, {
+            method: 'POST',
+            body: formData
+        });
+
+        loadProperties();
+    }
+
+    // حفظ النصوص والتعديلات
+    async function saveProperty(code) {
+        const payload = {
+            action: 'update_details',
+            code: code,
+            price: document.getElementById(`price-${code}`).value,
+            deposit: document.getElementById(`deposit-${code}`).value,
+            area: document.getElementById(`area-${code}`).value,
+            space: document.getElementById(`space-${code}`).value,
+            rooms: document.getElementById(`rooms-${code}`).value,
+            type: document.getElementById(`type-${code}`).value,
+            desc: document.getElementById(`desc-${code}`).value,
+        };
+
+        await sendToN8N(N8N_UPDATE_URL, payload);
+        alert('تم حفظ التعديلات بنجاح!');
+    }
+
+    // حذف العقار بالكامل
+    async function deleteProperty(code) {
+        if(!confirm(`هل أنت متأكد من حذف العقار رقم (${code}) بالكامل؟`)) return;
+        await sendToN8N(N8N_DELETE_URL, { code });
+        loadProperties();
+    }
+
+    // دالة مساعدة لإرسال البيانات
+    async function sendToN8N(url, data) {
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+    }
+</script>
+</body>
+</html>
