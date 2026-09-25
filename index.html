@@ -325,16 +325,36 @@
 
     <script>
         const N8N_WEBHOOK_URL = 'https://n8n.hellolucidagency.com/webhook/properties';
-
 let allProperties = [];
         let currentEditingImages = [];
 
-        // 1️⃣ دالة معالجة روابط الصور الذكية (إصلاح Cloudinary و .heic تلقائياً)
+        // 💡 دالة مرنة جداً لقراءة أي حقل بغض النظر عن الهمزات (إ / ا / أ) أو المسافات
+        function getVal(obj, fieldName) {
+            if (!obj) return '';
+            
+            // 1. تجربة القراءة المباشرة
+            if (obj[fieldName] !== undefined && obj[fieldName] !== null && String(obj[fieldName]).trim() !== '') {
+                return String(obj[fieldName]).trim();
+            }
+
+            // 2. المقارنة المرنة (تجاهل الهمزات والمسافات الزائدة)
+            const clean = (s) => String(s || '').replace(/[أإآ]/g, 'ا').replace(/\s+/g, ' ').trim();
+            const target = clean(fieldName);
+
+            for (let key in obj) {
+                if (clean(key) === target) {
+                    const val = obj[key];
+                    if (val !== undefined && val !== null) return String(val).trim();
+                }
+            }
+            return '';
+        }
+
+        // 1️⃣ دالة معالجة روابط الصور الذكية (حل Cloudinary و HEIC)
         function formatImageUrl(url) {
             if (!url) return 'https://via.placeholder.com/400x300?text=No+Image';
             let clean = String(url).trim();
 
-            // حل مشكلة Cloudinary لصور HEIC باستخدام f_auto بدلاً من تغيير الامتداد
             if (clean.includes('cloudinary.com') && clean.includes('/upload/')) {
                 if (!clean.includes('/f_auto/') && !clean.includes('/f_jpg/')) {
                     clean = clean.replace('/upload/', '/upload/f_auto/');
@@ -343,7 +363,7 @@ let allProperties = [];
             return clean;
         }
 
-        // 2️⃣ تقسيم سلسلة روابط الصور إلى مصفوفة
+        // 2️⃣ تقسيم سلسلة روابط الصور
         function parseImages(imagesString) {
             if (!imagesString) return [];
             return String(imagesString).split(',')
@@ -367,16 +387,21 @@ let allProperties = [];
             }
         }
 
-        // 4️⃣ عرض كروت العقارات
+        // 4️⃣ عرض كروت العقارات بدقة مرنة
         function renderPropertiesGrid(properties) {
             const grid = document.getElementById('propertiesGrid');
             grid.innerHTML = '';
 
             properties.forEach(function(item) {
-                const rawImages = item['رابط الصور'] || '';
+                const rawImages = getVal(item, 'رابط الصور');
                 const imagesList = parseImages(rawImages);
                 const mainImage = imagesList.length > 0 ? formatImageUrl(imagesList[0]) : 'https://via.placeholder.com/400x300?text=No+Image';
-                const code = item['كود الوحدة'] || 'N/A';
+                
+                const code = getVal(item, 'كود الوحدة') || 'N/A';
+                const unitType = getVal(item, 'نوع الوحدة');
+                const section = getVal(item, 'القسم');
+                const region = getVal(item, 'المنطقة');
+                const price = getVal(item, 'السعر الإجمالي') || getVal(item, 'السعر الاجمالي');
 
                 const card = document.createElement('div');
                 card.className = 'property-card';
@@ -387,9 +412,9 @@ let allProperties = [];
                         '<span class="images-count-badge">📷 ' + imagesList.length + ' صور</span>' +
                     '</div>' +
                     '<div class="card-content">' +
-                        '<h3 class="card-title">' + (item['نوع الوحدة'] || '') + ' - ' + (item['القسم'] || '') + '</h3>' +
-                        '<div class="card-location">📍 ' + (item['المنطقة'] || 'غير محدد') + '</div>' +
-                        '<div class="card-price">' + (item['السعر الإجمالي'] || 'غير معلن') + '</div>' +
+                        '<h3 class="card-title">' + (unitType || 'وحدة عقارية') + (section ? ' - ' + section : '') + '</h3>' +
+                        '<div class="card-location">📍 ' + (region || 'غير محدد') + '</div>' +
+                        '<div class="card-price">' + (price ? price + ' EGP' : 'السعر عند الطلب') + '</div>' +
                     '</div>' +
                     '<div class="card-actions">' +
                         '<button class="btn btn-edit" data-code="' + code + '">📝 تعديل والتفاصيل</button>' +
@@ -403,29 +428,31 @@ let allProperties = [];
             });
         }
 
-        // 5️⃣ فتح نافذة التعديل وتعبئة البيانات
+        // 5️⃣ فتح نافذة التعديل وتعبئة البيانات بدقة
         function openEditModal(code) {
-            const unit = allProperties.find(function(p) { return p['كود الوحدة'] === code; });
+            const unit = allProperties.find(function(p) { 
+                return getVal(p, 'كود الوحدة') === String(code); 
+            });
             if (!unit) return;
 
-            document.getElementById('editCode').value = unit['كود الوحدة'] || '';
-            document.getElementById('editSection').value = unit['القسم'] || '';
-            document.getElementById('editType').value = unit['نوع الوحدة'] || '';
-            document.getElementById('editRegion').value = unit['المنطقة'] || '';
-            document.getElementById('editArea').value = unit['المساحة'] || '';
-            document.getElementById('editPrice').value = unit['السعر الإجمالي'] || '';
-            document.getElementById('editDownPayment').value = unit['المقدم'] || '';
-            document.getElementById('editInstallment').value = unit['نظام التقسيط'] || '';
-            document.getElementById('editRooms').value = unit['عدد الغرف'] || '';
-            document.getElementById('editDesc').value = unit['الوصف التسويقي'] || '';
+            document.getElementById('editCode').value = getVal(unit, 'كود الوحدة');
+            document.getElementById('editSection').value = getVal(unit, 'القسم');
+            document.getElementById('editType').value = getVal(unit, 'نوع الوحدة');
+            document.getElementById('editRegion').value = getVal(unit, 'المنطقة');
+            document.getElementById('editArea').value = getVal(unit, 'المساحة');
+            document.getElementById('editPrice').value = getVal(unit, 'السعر الإجمالي') || getVal(unit, 'السعر الاجمالي');
+            document.getElementById('editDownPayment').value = getVal(unit, 'المقدم');
+            document.getElementById('editInstallment').value = getVal(unit, 'نظام التقسيط');
+            document.getElementById('editRooms').value = getVal(unit, 'عدد الغرف');
+            document.getElementById('editDesc').value = getVal(unit, 'الوصف التسويقي');
 
-            currentEditingImages = parseImages(unit['رابط الصور'] || '');
+            currentEditingImages = parseImages(getVal(unit, 'رابط الصور'));
             renderEditImagesUI();
 
             document.getElementById('editModal').classList.add('active');
         }
 
-        // 6️⃣ عرض إدارة الصور (بدون أسهم - بضغطة زر تجعلها رئيسية)
+        // 6️⃣ عرض إدارة الصور
         function renderEditImagesUI() {
             const container = document.getElementById('editImagesContainer');
             container.innerHTML = '';
@@ -463,7 +490,6 @@ let allProperties = [];
             });
         }
 
-        // نقل الصورة المختارة لتصبح هي الأولى (الرئيسية)
         function setAsMainImage(index) {
             if (index > 0 && index < currentEditingImages.length) {
                 const selectedImg = currentEditingImages.splice(index, 1)[0];
