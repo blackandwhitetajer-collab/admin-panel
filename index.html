@@ -9,8 +9,14 @@
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .login-card { max-width: 400px; margin: 80px auto; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        .hero-img { width: 70px; height: 50px; object-fit: cover; border-radius: 6px; }
-        .card { border-radius: 12px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .card { border-radius: 12px; border: none; transition: transform 0.2s; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .property-card:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        .card-img-container { position: relative; height: 180px; overflow: hidden; border-radius: 12px 12px 0 0; background: #e9ecef; }
+        .card-img-top { width: 100%; height: 100%; object-fit: cover; }
+        .img-badge { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; }
+        .code-badge { position: absolute; top: 10px; left: 10px; background: #0d6efd; color: #fff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
+        .gallery-thumb { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+        .gallery-thumb:hover { border-color: #0d6efd; }
     </style>
 </head>
 <body>
@@ -31,46 +37,105 @@
     <!-- لوحة التحكم الرئيسية -->
     <div id="admin-section" class="container py-4 d-none">
         <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
-            <h3 class="m-0"><i class="fa-solid fa-building-user text-primary me-2"></i>إدارة العقارات والوحدات</h3>
-            <button onclick="logout()" class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-right-from-bracket me-1"></i>خروج</button>
+            <h4 class="m-0 text-primary"><i class="fa-solid fa-building me-2"></i>قائمة الوحدات العقارية</h4>
+            <div>
+                <button onclick="fetchProperties()" class="btn btn-outline-secondary btn-sm me-2"><i class="fa-solid fa-rotate me-1"></i>تحديث</button>
+                <button onclick="logout()" class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-right-from-bracket me-1"></i>خروج</button>
+            </div>
         </div>
 
-        <div class="card p-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="m-0">قائمة العقارات</h5>
-                <button onclick="fetchProperties()" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-rotate me-1"></i>تحديث البيانات</button>
-            </div>
+        <!-- مؤشر التحميل -->
+        <div id="loading-spinner" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">جاري تحميل الوحدات العقارية...</p>
+        </div>
 
-            <!-- مؤشر التحميل -->
-            <div id="loading-spinner" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-2 text-muted">جاري تحميل البيانات من السيرفر...</p>
-            </div>
+        <!-- شبكة كروت العقارات -->
+        <div class="row g-4 d-none" id="properties-grid">
+            <!-- الكروت تتولد هنا ديناميكياً -->
+        </div>
 
-            <!-- جدول عرض البيانات -->
-            <div class="table-responsive d-none" id="table-container">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr id="table-headers">
-                            <!-- سيتم توليد الأعمدة تلقائياً -->
-                        </tr>
-                    </thead>
-                    <tbody id="properties-list">
-                        <!-- سيتم توليد الصفوف تلقائياً -->
-                    </tbody>
-                </table>
-            </div>
+        <div id="empty-msg" class="text-center py-5 d-none text-muted">لا توجد عقارات مسجلة حالياً.</div>
+        <div id="error-msg" class="text-center py-5 text-danger d-none">حدث خطأ أثناء تحميل البيانات من السيرفر!</div>
+    </div>
 
-            <div id="empty-msg" class="text-center py-4 d-none text-muted">لا توجد عقارات للعرض حالياً.</div>
-            <div id="error-msg" class="text-center py-4 text-danger d-none">حدث خطأ أثناء تحميل البيانات من n8n!</div>
+    <!-- نافذة تفاصيل وتعديل العقار (Modal) -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="modalTitle">تفاصيل العقار</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- معرض جميع الصور -->
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-images text-primary me-2"></i>معرض الصور الكامل:</h6>
+                    <div class="row g-2 mb-4" id="modalGallery">
+                        <!-- جميع الصور تظهر هنا -->
+                    </div>
+
+                    <hr>
+
+                    <!-- خانات بيانات العقار (نموذج التعديل والعرض) -->
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-sliders text-primary me-2"></i>بيانات العقار الأساسية:</h6>
+                    <form id="editForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">كود الوحدة</label>
+                                <input type="text" class="form-control" id="modalCode" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">المنطقة / الحي</label>
+                                <input type="text" class="form-control" id="modalRegion">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">نوع الوحدة والقسم</label>
+                                <input type="text" class="form-control" id="modalType">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">المساحة</label>
+                                <input type="text" class="form-control" id="modalArea">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">السعر الإجمالي</label>
+                                <input type="text" class="form-control" id="modalPrice">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">المقدم</label>
+                                <input type="text" class="form-control" id="modalDownPayment">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">نظام التقسيط</label>
+                                <input type="text" class="form-control" id="modalInstallment">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">عدد الغرف</label>
+                                <input type="text" class="form-control" id="modalRooms">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small text-muted">الوصف التسويقي</label>
+                                <textarea class="form-control" id="modalDesc" rows="4"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    <button type="button" class="btn btn-primary" onclick="alert('سندعم حفظ التعديلات في الخطوة القادمة!')"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ التعديلات</button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const WEBHOOK_URL = 'https://n8n.hellolucidagency.com/webhook/properties';
         const PASS_CODE = 'Client@2026';
+        let propertiesData = [];
+        let detailsModalInstance;
 
         window.onload = function() {
+            detailsModalInstance = new bootstrap.Modal(document.getElementById('detailsModal'));
             if (sessionStorage.getItem('admin_logged') === 'true') {
                 showAdmin();
             }
@@ -101,7 +166,7 @@
 
         async function fetchProperties() {
             document.getElementById('loading-spinner').classList.remove('d-none');
-            document.getElementById('table-container').classList.add('d-none');
+            document.getElementById('properties-grid').classList.add('d-none');
             document.getElementById('error-msg').classList.add('d-none');
             document.getElementById('empty-msg').classList.add('d-none');
 
@@ -112,20 +177,20 @@
                     body: JSON.stringify({ action: 'get' })
                 });
 
-                if (!response.ok) throw new Error('فشل الاتصال بالشيرفر');
+                if (!response.ok) throw new Error('فشل الاتصال');
 
                 const data = await response.json();
                 document.getElementById('loading-spinner').classList.add('d-none');
 
                 let items = Array.isArray(data) ? data : [data];
-                let rows = items.map(item => item.json || item);
+                propertiesData = items.map(item => item.json || item);
 
-                if (rows.length === 0) {
+                if (propertiesData.length === 0) {
                     document.getElementById('empty-msg').classList.remove('d-none');
                     return;
                 }
 
-                renderTable(rows);
+                renderCards(propertiesData);
             } catch (err) {
                 console.error(err);
                 document.getElementById('loading-spinner').classList.add('d-none');
@@ -133,36 +198,87 @@
             }
         }
 
-        function renderTable(rows) {
-            const headersRow = document.getElementById('table-headers');
-            const tbody = document.getElementById('properties-list');
+        function renderCards(rows) {
+            const grid = document.getElementById('properties-grid');
+            grid.innerHTML = '';
 
-            headersRow.innerHTML = '';
-            tbody.innerHTML = '';
+            rows.forEach((row, index) => {
+                const code = row['كود الوحدة'] || row['كود'] || `وحدة #${index + 1}`;
+                const type = row['نوع الوحدة'] || row['القسم'] || 'عقار';
+                const region = row['المنطقة'] || row['المنطقه'] || row['حَي'] || 'غير محدد';
+                const price = row['السعر الاجمالي'] || row['السعر الإجمالي'] || row['السعر'] || 'حسب الطلب';
 
-            const keys = Object.keys(rows[0]);
-            
-            keys.forEach(key => {
-                headersRow.innerHTML += `<th>${key}</th>`;
+                // استخراج ومعالجة جميع الصور
+                const rawImgs = row['رابط الصور'] || row['الصور'] || '';
+                const imgList = rawImgs ? rawImgs.split(',').map(s => s.trim()).filter(Boolean) : [];
+                const heroImg = imgList.length > 0 ? imgList[0] : 'https://via.placeholder.com/400x250?text=No+Image';
+
+                const col = document.createElement('div');
+                col.className = 'col-12 col-md-6 col-lg-4';
+                col.innerHTML = `
+                    <div class="card h-100 property-card">
+                        <div class="card-img-container">
+                            <img src="${heroImg}" class="card-img-top" alt="صورة العقار">
+                            <span class="code-badge">${code}</span>
+                            <span class="img-badge"><i class="fa-solid fa-camera me-1"></i>${imgList.length} صور</span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title mb-1 text-truncate">${type}</h5>
+                            <p class="text-muted small mb-2"><i class="fa-solid fa-location-dot me-1 text-danger"></i>${region}</p>
+                            <h6 class="text-success fw-bold mb-3">${price} EGP</h6>
+                            
+                            <div class="d-flex gap-2">
+                                <button onclick="openDetailsModal(${index})" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i>تعديل والتفاصيل
+                                </button>
+                                <button onclick="alert('سندعم الحذف في الخطوة القادمة!')" class="btn btn-outline-danger btn-sm">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(col);
             });
 
-            rows.forEach(row => {
-                let tr = '<tr>';
-                keys.forEach(key => {
-                    let val = row[key] || '';
-                    
-                    if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://')) && (val.includes('.jpg') || val.includes('.png') || val.includes('.webp') || val.includes('cloudinary'))) {
-                        let firstImg = val.split(',')[0].trim();
-                        tr += `<td><img src="${firstImg}" class="hero-img" alt="صورة"></td>`;
-                    } else {
-                        tr += `<td>${val}</td>`;
-                    }
+            grid.classList.remove('d-none');
+        }
+
+        function openDetailsModal(index) {
+            const item = propertiesData[index];
+            if (!item) return;
+
+            document.getElementById('modalTitle').innerText = `تفاصيل وتعديل العقار: ${item['كود الوحدة'] || item['كود'] || ''}`;
+
+            // ملء صور المعرض بالكامل
+            const rawImgs = item['رابط الصور'] || item['الصور'] || '';
+            const imgList = rawImgs ? rawImgs.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const galleryContainer = document.getElementById('modalGallery');
+            galleryContainer.innerHTML = '';
+
+            if (imgList.length === 0) {
+                galleryContainer.innerHTML = '<div class="col-12 text-muted small">لا توجد صور لهذه الوحدة.</div>';
+            } else {
+                imgList.forEach(img => {
+                    const imgCol = document.createElement('div');
+                    imgCol.className = 'col-4 col-sm-3';
+                    imgCol.innerHTML = `<a href="${img}" target="_blank"><img src="${img}" class="gallery-thumb" title="اضغط لفتح الصورة بحجم كامل"></a>`;
+                    galleryContainer.appendChild(imgCol);
                 });
-                tr += '</tr>';
-                tbody.innerHTML += tr;
-            });
+            }
 
-            document.getElementById('table-container').classList.remove('d-none');
+            // ملء خانات النموذج
+            document.getElementById('modalCode').value = item['كود الوحدة'] || item['كود'] || '';
+            document.getElementById('modalRegion').value = item['المنطقة'] || item['المنطقه'] || item['حَي'] || '';
+            document.getElementById('modalType').value = `${item['نوع الوحدة'] || ''} ${item['القسم'] || ''}`.trim();
+            document.getElementById('modalArea').value = item['المساحة'] || item['المساحه'] || '';
+            document.getElementById('modalPrice').value = item['السعر الاجمالي'] || item['السعر الإجمالي'] || item['السعر'] || '';
+            document.getElementById('modalDownPayment').value = item['المقدم'] || '';
+            document.getElementById('modalInstallment').value = item['نظام التقسيط'] || item['التقسيط'] || '';
+            document.getElementById('modalRooms').value = item['عدد الغرف'] || item['الغرف'] || '';
+            document.getElementById('modalDesc').value = item['الوصف التسويقي'] || item['الوصف'] || '';
+
+            detailsModalInstance.show();
         }
     </script>
 </body>
