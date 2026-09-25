@@ -15,8 +15,8 @@
         .card-img-top { width: 100%; height: 100%; object-fit: cover; }
         .img-badge { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; }
         .code-badge { position: absolute; top: 10px; left: 10px; background: #0d6efd; color: #fff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
-        .gallery-thumb { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
-        .gallery-thumb:hover { border-color: #0d6efd; }
+        .gallery-thumb { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .gallery-thumb:hover { border-color: #0d6efd; transform: scale(1.03); }
     </style>
 </head>
 <body>
@@ -51,9 +51,7 @@
         </div>
 
         <!-- شبكة كروت العقارات -->
-        <div class="row g-4 d-none" id="properties-grid">
-            <!-- الكروت تتولد هنا ديناميكياً -->
-        </div>
+        <div class="row g-4 d-none" id="properties-grid"></div>
 
         <div id="empty-msg" class="text-center py-5 d-none text-muted">لا توجد عقارات مسجلة حالياً.</div>
         <div id="error-msg" class="text-center py-5 text-danger d-none">حدث خطأ أثناء تحميل البيانات من السيرفر!</div>
@@ -70,13 +68,11 @@
                 <div class="modal-body">
                     <!-- معرض جميع الصور -->
                     <h6 class="fw-bold mb-3"><i class="fa-solid fa-images text-primary me-2"></i>معرض الصور الكامل:</h6>
-                    <div class="row g-2 mb-4" id="modalGallery">
-                        <!-- جميع الصور تظهر هنا -->
-                    </div>
+                    <div class="row g-2 mb-4" id="modalGallery"></div>
 
                     <hr>
 
-                    <!-- خانات بيانات العقار (نموذج التعديل والعرض) -->
+                    <!-- خانات بيانات العقار -->
                     <h6 class="fw-bold mb-3"><i class="fa-solid fa-sliders text-primary me-2"></i>بيانات العقار الأساسية:</h6>
                     <form id="editForm">
                         <div class="row g-3">
@@ -121,7 +117,7 @@
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                    <button type="button" class="btn btn-primary" onclick="alert('سندعم حفظ التعديلات في الخطوة القادمة!')"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ التعديلات</button>
+                    <button type="button" class="btn btn-primary" onclick="alert('سندعم حفظ التعديلات والحذف في الخطوة التالية!')"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ التعديلات</button>
                 </div>
             </div>
         </div>
@@ -164,6 +160,33 @@
             fetchProperties();
         }
 
+        // دالة ذكية للبحث عن قيمة الحقل بغض النظر عن المسافات أو الهمزات
+        function getValue(row, possibleKeys) {
+            if (!row) return '';
+            const rowKeys = Object.keys(row);
+
+            // 1. مطابقة مباشرة أولاً
+            for (let key of possibleKeys) {
+                if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') {
+                    return String(row[key]).trim();
+                }
+            }
+
+            // 2. مطابقة مرنة (تجاهل الهمزات والمسافات)
+            for (let rKey of rowKeys) {
+                const cleanRKey = rKey.replace(/[\u0622\u0623\u0625]/g, 'ا').replace(/\s+/g, '').toLowerCase();
+                for (let pKey of possibleKeys) {
+                    const cleanPKey = pKey.replace(/[\u0622\u0623\u0625]/g, 'ا').replace(/\s+/g, '').toLowerCase();
+                    if (cleanRKey === cleanPKey || cleanRKey.includes(cleanPKey)) {
+                        if (row[rKey] !== undefined && row[rKey] !== null && String(row[rKey]).trim() !== '') {
+                            return String(row[rKey]).trim();
+                        }
+                    }
+                }
+            }
+            return '';
+        }
+
         async function fetchProperties() {
             document.getElementById('loading-spinner').classList.remove('d-none');
             document.getElementById('properties-grid').classList.add('d-none');
@@ -203,13 +226,12 @@
             grid.innerHTML = '';
 
             rows.forEach((row, index) => {
-                const code = row['كود الوحدة'] || row['كود'] || `وحدة #${index + 1}`;
-                const type = row['نوع الوحدة'] || row['القسم'] || 'عقار';
-                const region = row['المنطقة'] || row['المنطقه'] || row['حَي'] || 'غير محدد';
-                const price = row['السعر الاجمالي'] || row['السعر الإجمالي'] || row['السعر'] || 'حسب الطلب';
+                const code = getValue(row, ['كود الوحدة', 'كود']) || `وحدة #${index + 1}`;
+                const type = getValue(row, ['نوع الوحدة', 'القسم']) || 'عقار';
+                const region = getValue(row, ['المنطقة', 'المنطقه', 'حي', 'الحي']) || 'غير محدد';
+                const price = getValue(row, ['السعر الإجمالي', 'السعر الاجمالي', 'السعر', 'سعر']) || 'حسب الطلب';
 
-                // استخراج ومعالجة جميع الصور
-                const rawImgs = row['رابط الصور'] || row['الصور'] || '';
+                const rawImgs = getValue(row, ['رابط الصور', 'الصور', 'صور']);
                 const imgList = rawImgs ? rawImgs.split(',').map(s => s.trim()).filter(Boolean) : [];
                 const heroImg = imgList.length > 0 ? imgList[0] : 'https://via.placeholder.com/400x250?text=No+Image';
 
@@ -225,13 +247,13 @@
                         <div class="card-body">
                             <h5 class="card-title mb-1 text-truncate">${type}</h5>
                             <p class="text-muted small mb-2"><i class="fa-solid fa-location-dot me-1 text-danger"></i>${region}</p>
-                            <h6 class="text-success fw-bold mb-3">${price} EGP</h6>
+                            <h6 class="text-success fw-bold mb-3">${price} ${price !== 'حسب الطلب' ? 'جنية' : ''}</h6>
                             
                             <div class="d-flex gap-2">
                                 <button onclick="openDetailsModal(${index})" class="btn btn-outline-primary btn-sm w-100">
                                     <i class="fa-solid fa-pen-to-square me-1"></i>تعديل والتفاصيل
                                 </button>
-                                <button onclick="alert('سندعم الحذف في الخطوة القادمة!')" class="btn btn-outline-danger btn-sm">
+                                <button onclick="alert('سندعم الحذف في الخطوة التالية!')" class="btn btn-outline-danger btn-sm">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
@@ -248,10 +270,11 @@
             const item = propertiesData[index];
             if (!item) return;
 
-            document.getElementById('modalTitle').innerText = `تفاصيل وتعديل العقار: ${item['كود الوحدة'] || item['كود'] || ''}`;
+            const code = getValue(item, ['كود الوحدة', 'كود']);
+            document.getElementById('modalTitle').innerText = `تفاصيل وتعديل العقار: ${code}`;
 
-            // ملء صور المعرض بالكامل
-            const rawImgs = item['رابط الصور'] || item['الصور'] || '';
+            // ملء المعرض بالصور
+            const rawImgs = getValue(item, ['رابط الصور', 'الصور', 'صور']);
             const imgList = rawImgs ? rawImgs.split(',').map(s => s.trim()).filter(Boolean) : [];
             const galleryContainer = document.getElementById('modalGallery');
             galleryContainer.innerHTML = '';
@@ -267,16 +290,16 @@
                 });
             }
 
-            // ملء خانات النموذج
-            document.getElementById('modalCode').value = item['كود الوحدة'] || item['كود'] || '';
-            document.getElementById('modalRegion').value = item['المنطقة'] || item['المنطقه'] || item['حَي'] || '';
-            document.getElementById('modalType').value = `${item['نوع الوحدة'] || ''} ${item['القسم'] || ''}`.trim();
-            document.getElementById('modalArea').value = item['المساحة'] || item['المساحه'] || '';
-            document.getElementById('modalPrice').value = item['السعر الاجمالي'] || item['السعر الإجمالي'] || item['السعر'] || '';
-            document.getElementById('modalDownPayment').value = item['المقدم'] || '';
-            document.getElementById('modalInstallment').value = item['نظام التقسيط'] || item['التقسيط'] || '';
-            document.getElementById('modalRooms').value = item['عدد الغرف'] || item['الغرف'] || '';
-            document.getElementById('modalDesc').value = item['الوصف التسويقي'] || item['الوصف'] || '';
+            // ملء باقي الخانات بالدالة الذكية
+            document.getElementById('modalCode').value = getValue(item, ['كود الوحدة', 'كود']);
+            document.getElementById('modalRegion').value = getValue(item, ['المنطقة', 'المنطقه', 'حي', 'الحي']);
+            document.getElementById('modalType').value = getValue(item, ['نوع الوحدة', 'القسم']);
+            document.getElementById('modalArea').value = getValue(item, ['المساحة', 'المساحه']);
+            document.getElementById('modalPrice').value = getValue(item, ['السعر الإجمالي', 'السعر الاجمالي', 'السعر', 'سعر']);
+            document.getElementById('modalDownPayment').value = getValue(item, ['المقدم', 'مقدم']);
+            document.getElementById('modalInstallment').value = getValue(item, ['نظام التقسيط', 'التقسيط']);
+            document.getElementById('modalRooms').value = getValue(item, ['عدد الغرف', 'الغرف']);
+            document.getElementById('modalDesc').value = getValue(item, ['الوصف التسويقي', 'الوصف']);
 
             detailsModalInstance.show();
         }
