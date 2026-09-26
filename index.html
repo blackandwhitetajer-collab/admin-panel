@@ -325,232 +325,313 @@
 
     <script>
         const N8N_WEBHOOK_URL = 'https://n8n.hellolucidagency.com/webhook/properties';
-let allProperties = [];
-        let currentEditingImages = [];
+const CLOUDINARY_CLOUD_NAME = 'fig3bixy';
+    const CLOUDINARY_PRESET = 'properties_preset';
 
-        // 💡 دالة مرنة جداً لقراءة أي حقل بغض النظر عن الهمزات (إ / ا / أ) أو المسافات
-        function getVal(obj, fieldName) {
-            if (!obj) return '';
-            
-            // 1. تجربة القراءة المباشرة
-            if (obj[fieldName] !== undefined && obj[fieldName] !== null && String(obj[fieldName]).trim() !== '') {
-                return String(obj[fieldName]).trim();
+    let allProperties = [];
+    let currentEditingImages = [];
+
+    // 💡 دالة القراءة المرنة لمراعاة الهمزات (إ / ا / أ) والمسافات
+    function getVal(obj, fieldName) {
+        if (!obj) return '';
+        if (obj[fieldName] !== undefined && obj[fieldName] !== null && String(obj[fieldName]).trim() !== '') {
+            return String(obj[fieldName]).trim();
+        }
+        const clean = (s) => String(s || '').replace(/[أإآ]/g, 'ا').replace(/\s+/g, ' ').trim();
+        const target = clean(fieldName);
+        for (let key in obj) {
+            if (clean(key) === target) {
+                const val = obj[key];
+                if (val !== undefined && val !== null) return String(val).trim();
             }
+        }
+        return '';
+    }
 
-            // 2. المقارنة المرنة (تجاهل الهمزات والمسافات الزائدة)
-            const clean = (s) => String(s || '').replace(/[أإآ]/g, 'ا').replace(/\s+/g, ' ').trim();
-            const target = clean(fieldName);
-
-            for (let key in obj) {
-                if (clean(key) === target) {
-                    const val = obj[key];
-                    if (val !== undefined && val !== null) return String(val).trim();
-                }
+    // 1️⃣ معالجة رابط الصورة لمعالجة الـ HEIC وتحسين الأداء
+    function formatImageUrl(url) {
+        if (!url) return 'https://via.placeholder.com/400x300?text=No+Image';
+        let clean = String(url).trim();
+        if (clean.includes('cloudinary.com') && clean.includes('/upload/')) {
+            if (!clean.includes('/f_auto/') && !clean.includes('/f_jpg/')) {
+                clean = clean.replace('/upload/', '/upload/f_auto/');
             }
-            return '';
+        }
+        return clean;
+    }
+
+    // 2️⃣ تفكيك سلاسل روابط الصور المفصولة بفاصلة
+    function parseImages(imagesString) {
+        if (!imagesString) return [];
+        return String(imagesString).split(',')
+            .map(img => img.trim())
+            .filter(img => img.length > 0);
+    }
+
+    // 3️⃣ دالة رفع الصور المباشرة لـ Cloudinary (حد أقصى 10 صور)
+    async function uploadImagesToCloudinary(fileInput) {
+        const files = Array.from(fileInput.files);
+        if (files.length === 0) return [];
+
+        if (files.length > 10) {
+            alert('عفواً، الحد الأقصى المسموح به هو 10 صور فقط لكل عقار.');
+            return null;
         }
 
-        // 1️⃣ دالة معالجة روابط الصور الذكية (حل Cloudinary و HEIC)
-        function formatImageUrl(url) {
-            if (!url) return 'https://via.placeholder.com/400x300?text=No+Image';
-            let clean = String(url).trim();
+        const uploadedUrls = [];
+        for (let i = 0; i < files.length; i++) {
+            const formData = new FormData();
+            formData.append('file', files[i]);
+            formData.append('upload_preset', CLOUDINARY_PRESET);
 
-            if (clean.includes('cloudinary.com') && clean.includes('/upload/')) {
-                if (!clean.includes('/f_auto/') && !clean.includes('/f_jpg/')) {
-                    clean = clean.replace('/upload/', '/upload/f_auto/');
-                }
-            }
-            return clean;
-        }
-
-        // 2️⃣ تقسيم سلسلة روابط الصور
-        function parseImages(imagesString) {
-            if (!imagesString) return [];
-            return String(imagesString).split(',')
-                .map(function(img) { return img.trim(); })
-                .filter(function(img) { return img.length > 0; });
-        }
-
-        // 3️⃣ جلب العقارات من n8n
-        async function fetchProperties() {
             try {
-                const response = await fetch(N8N_WEBHOOK_URL, {
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: "get" })
+                    body: formData
                 });
-                const data = await response.json();
-                allProperties = Array.isArray(data) ? data : (data.data || []);
-                renderPropertiesGrid(allProperties);
+                const data = await res.json();
+                if (data.secure_url) {
+                    uploadedUrls.push(data.secure_url);
+                }
             } catch (err) {
-                console.error('خطأ في جلب البيانات:', err);
+                console.error('خطأ في رفع الصورة رقم ' + (i + 1), err);
             }
         }
+        return uploadedUrls;
+    }
 
-        // 4️⃣ عرض كروت العقارات بدقة مرنة
-        function renderPropertiesGrid(properties) {
-            const grid = document.getElementById('propertiesGrid');
-            grid.innerHTML = '';
-
-            properties.forEach(function(item) {
-                const rawImages = getVal(item, 'رابط الصور');
-                const imagesList = parseImages(rawImages);
-                const mainImage = imagesList.length > 0 ? formatImageUrl(imagesList[0]) : 'https://via.placeholder.com/400x300?text=No+Image';
-                
-                const code = getVal(item, 'كود الوحدة') || 'N/A';
-                const unitType = getVal(item, 'نوع الوحدة');
-                const section = getVal(item, 'القسم');
-                const region = getVal(item, 'المنطقة');
-                const price = getVal(item, 'السعر الإجمالي') || getVal(item, 'السعر الاجمالي');
-
-                const card = document.createElement('div');
-                card.className = 'property-card';
-                card.innerHTML = 
-                    '<span class="badge-code">' + code + '</span>' +
-                    '<div class="card-image-wrapper">' +
-                        '<img src="' + mainImage + '" class="card-image" alt="صورة العقار" onerror="this.src=\'https://via.placeholder.com/400x300?text=Image+Error\'">' +
-                        '<span class="images-count-badge">📷 ' + imagesList.length + ' صور</span>' +
-                    '</div>' +
-                    '<div class="card-content">' +
-                        '<h3 class="card-title">' + (unitType || 'وحدة عقارية') + (section ? ' - ' + section : '') + '</h3>' +
-                        '<div class="card-location">📍 ' + (region || 'غير محدد') + '</div>' +
-                        '<div class="card-price">' + (price ? price + ' EGP' : 'السعر عند الطلب') + '</div>' +
-                    '</div>' +
-                    '<div class="card-actions">' +
-                        '<button class="btn btn-edit" data-code="' + code + '">📝 تعديل والتفاصيل</button>' +
-                    '</div>';
-
-                card.querySelector('.btn-edit').addEventListener('click', function() {
-                    openEditModal(code);
-                });
-
-                grid.appendChild(card);
+    // 4️⃣ جلب العقارات من n8n
+    async function fetchProperties() {
+        try {
+            const response = await fetch(N8N_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: "get" })
             });
+            const data = await response.json();
+            allProperties = Array.isArray(data) ? data : (data.data || []);
+            renderPropertiesGrid(allProperties);
+        } catch (err) {
+            console.error('خطأ في جلب البيانات:', err);
+        }
+    }
+
+    // 5️⃣ رسم كروت العقارات
+    function renderPropertiesGrid(properties) {
+        const grid = document.getElementById('propertiesGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        properties.forEach(function(item) {
+            const rawImages = getVal(item, 'رابط الصور');
+            const imagesList = parseImages(rawImages);
+            const mainImage = imagesList.length > 0 ? formatImageUrl(imagesList[0]) : 'https://via.placeholder.com/400x300?text=No+Image';
+            
+            const code = getVal(item, 'كود الوحدة') || 'N/A';
+            const unitType = getVal(item, 'نوع الوحدة');
+            const section = getVal(item, 'القسم');
+            const region = getVal(item, 'المنطقة');
+            const price = getVal(item, 'السعر الإجمالي') || getVal(item, 'السعر الاجمالي');
+
+            const card = document.createElement('div');
+            card.className = 'property-card';
+            card.innerHTML = 
+                '<span class="badge-code">' + code + '</span>' +
+                '<div class="card-image-wrapper">' +
+                    '<img src="' + mainImage + '" class="card-image" alt="صورة العقار" onerror="this.src=\'https://via.placeholder.com/400x300?text=Image+Error\'">' +
+                    '<span class="images-count-badge">📷 ' + imagesList.length + ' صور</span>' +
+                '</div>' +
+                '<div class="card-content">' +
+                    '<h3 class="card-title">' + (unitType || 'وحدة عقارية') + (section ? ' - ' + section : '') + '</h3>' +
+                    '<div class="card-location">📍 ' + (region || 'غير محدد') + '</div>' +
+                    '<div class="card-price">' + (price ? price + ' EGP' : 'السعر عند الطلب') + '</div>' +
+                '</div>' +
+                '<div class="card-actions">' +
+                    '<button class="btn btn-edit" data-code="' + code + '">📝 تعديل والتفاصيل</button>' +
+                '</div>';
+
+            card.querySelector('.btn-edit').addEventListener('click', function() {
+                openEditModal(code);
+            });
+
+            grid.appendChild(card);
+        });
+    }
+
+    // 6️⃣ إرسال إضافة عقار جديد لـ n8n
+    async function submitAddProperty() {
+        const fileInput = document.getElementById('addImagesInput');
+        const saveBtn = document.getElementById('saveAddBtn');
+        
+        saveBtn.innerText = 'جاري رفع الصور...';
+        saveBtn.disabled = true;
+
+        // 1. رفع الصور لـ Cloudinary
+        const uploadedUrls = await uploadImagesToCloudinary(fileInput);
+        if (uploadedUrls === null) { // تم تجاوز الـ 10 صور
+            saveBtn.innerText = 'حفظ العقار';
+            saveBtn.disabled = false;
+            return;
         }
 
-        // 5️⃣ فتح نافذة التعديل وتعبئة البيانات بدقة
-        function openEditModal(code) {
-            const unit = allProperties.find(function(p) { 
-                return getVal(p, 'كود الوحدة') === String(code); 
+        saveBtn.innerText = 'جاري حفظ العقار...';
+
+        // 2. تجميع البيانات المبعوثة
+        const newPropertyPayload = {
+            action: "add",
+            "كود الوحدة": document.getElementById('addCode').value,
+            "القسم": document.getElementById('addSection').value,
+            "نوع الوحدة": document.getElementById('addType').value,
+            "المنطقة": document.getElementById('addRegion').value,
+            "المساحة": document.getElementById('addArea').value,
+            "السعر الإجمالي": document.getElementById('addPrice').value,
+            "المقدم": document.getElementById('addDownPayment').value,
+            "نظام التقسيط": document.getElementById('addInstallment').value,
+            "عدد الغرف": document.getElementById('addRooms').value,
+            "الوصف التسويقي": document.getElementById('addDesc').value,
+            "رابط الصور": uploadedUrls.join(', ')
+        };
+
+        // 3. إرسال إلى n8n
+        try {
+            const response = await fetch(N8N_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPropertyPayload)
             });
-            if (!unit) return;
 
-            document.getElementById('editCode').value = getVal(unit, 'كود الوحدة');
-            document.getElementById('editSection').value = getVal(unit, 'القسم');
-            document.getElementById('editType').value = getVal(unit, 'نوع الوحدة');
-            document.getElementById('editRegion').value = getVal(unit, 'المنطقة');
-            document.getElementById('editArea').value = getVal(unit, 'المساحة');
-            document.getElementById('editPrice').value = getVal(unit, 'السعر الإجمالي') || getVal(unit, 'السعر الاجمالي');
-            document.getElementById('editDownPayment').value = getVal(unit, 'المقدم');
-            document.getElementById('editInstallment').value = getVal(unit, 'نظام التقسيط');
-            document.getElementById('editRooms').value = getVal(unit, 'عدد الغرف');
-            document.getElementById('editDesc').value = getVal(unit, 'الوصف التسويقي');
+            if (response.ok) {
+                alert('تمت إضافة العقار الجديد بنجاح!');
+                closeAddModal();
+                fetchProperties(); // إعادة تنشيط الشاشة
+            } else {
+                alert('حدث خطأ أثناء حفظ العقار.');
+            }
+        } catch (err) {
+            console.error('Error adding property:', err);
+            alert('فشل الاتصال بالسيرفر.');
+        } finally {
+            saveBtn.innerText = 'حفظ العقار';
+            saveBtn.disabled = false;
+        }
+    }
 
-            currentEditingImages = parseImages(getVal(unit, 'رابط الصور'));
+    // 7️⃣ إدارة نافذة التعديل
+    function openEditModal(code) {
+        const unit = allProperties.find(p => getVal(p, 'كود الوحدة') === String(code));
+        if (!unit) return;
+
+        document.getElementById('editCode').value = getVal(unit, 'كود الوحدة');
+        document.getElementById('editSection').value = getVal(unit, 'القسم');
+        document.getElementById('editType').value = getVal(unit, 'نوع الوحدة');
+        document.getElementById('editRegion').value = getVal(unit, 'المنطقة');
+        document.getElementById('editArea').value = getVal(unit, 'المساحة');
+        document.getElementById('editPrice').value = getVal(unit, 'السعر الإجمالي') || getVal(unit, 'السعر الاجمالي');
+        document.getElementById('editDownPayment').value = getVal(unit, 'المقدم');
+        document.getElementById('editInstallment').value = getVal(unit, 'نظام التقسيط');
+        document.getElementById('editRooms').value = getVal(unit, 'عدد الغرف');
+        document.getElementById('editDesc').value = getVal(unit, 'الوصف التسويقي');
+
+        currentEditingImages = parseImages(getVal(unit, 'رابط الصور'));
+        renderEditImagesUI();
+
+        document.getElementById('editModal').classList.add('active');
+    }
+
+    function renderEditImagesUI() {
+        const container = document.getElementById('editImagesContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (currentEditingImages.length === 0) {
+            container.innerHTML = '<span style="color:#9ca3af; font-size:0.9rem;">لا توجد صور لهذه الوحدة</span>';
+            return;
+        }
+
+        currentEditingImages.forEach((imgUrl, index) => {
+            const isMain = index === 0;
+            const card = document.createElement('div');
+            card.className = 'img-preview-card' + (isMain ? ' main-img' : '');
+            
+            let html = isMain ? '<span class="main-badge">الرئيسية</span>' : '';
+            html += `<img src="${formatImageUrl(imgUrl)}" alt="صورة">`;
+            html += '<div class="img-controls">';
+            if (!isMain) {
+                html += `<button type="button" class="btn-mini set-main" onclick="setAsMainImage(${index})" title="جعلها الصورة الرئيسية">⭐ رئيسية</button>`;
+            }
+            html += `<button type="button" class="btn-mini delete" onclick="removeImage(${index})" title="حذف الصورة">🗑️ حذف</button>`;
+            html += '</div>';
+
+            card.innerHTML = html;
+            container.appendChild(card);
+        });
+    }
+
+    function setAsMainImage(index) {
+        if (index > 0 && index < currentEditingImages.length) {
+            const selectedImg = currentEditingImages.splice(index, 1)[0];
+            currentEditingImages.unshift(selectedImg);
             renderEditImagesUI();
-
-            document.getElementById('editModal').classList.add('active');
         }
+    }
 
-        // 6️⃣ عرض إدارة الصور
-        function renderEditImagesUI() {
-            const container = document.getElementById('editImagesContainer');
-            container.innerHTML = '';
+    function removeImage(index) {
+        currentEditingImages.splice(index, 1);
+        renderEditImagesUI();
+    }
 
-            if (currentEditingImages.length === 0) {
-                container.innerHTML = '<span style="color:#9ca3af; font-size:0.9rem;">لا توجد صور لهذه الوحدة</span>';
-                return;
-            }
+    function closeModal() {
+        document.getElementById('editModal').classList.remove('active');
+    }
 
-            currentEditingImages.forEach(function(imgUrl, index) {
-                const isMain = index === 0;
-                const card = document.createElement('div');
-                card.className = 'img-preview-card' + (isMain ? ' main-img' : '');
-                
-                var html = '';
-                if (isMain) html += '<span class="main-badge">الرئيسية</span>';
-                html += '<img src="' + formatImageUrl(imgUrl) + '" alt="صورة">';
-                html += '<div class="img-controls">';
-                
-                if (!isMain) {
-                    html += '<button type="button" class="btn-mini set-main" data-idx="' + index + '" title="جعلها الصورة الرئيسية">⭐ رئيسية</button>';
-                }
-                html += '<button type="button" class="btn-mini delete remove-img" data-idx="' + index + '" title="حذف الصورة">🗑️ حذف</button>';
-                html += '</div>';
+    function closeAddModal() {
+        document.getElementById('addModal').classList.remove('active');
+    }
 
-                card.innerHTML = html;
+    // 8️⃣ إرسال التعديل لـ n8n
+    async function submitUpdate() {
+        const saveBtn = document.getElementById('saveModalBtn');
+        saveBtn.innerText = 'جاري الحفظ...';
+        saveBtn.disabled = true;
 
-                var mainBtn = card.querySelector('.set-main');
-                if (mainBtn) mainBtn.onclick = function() { setAsMainImage(index); };
+        const updatedPayload = {
+            action: "update",
+            "كود الوحدة": document.getElementById('editCode').value,
+            "القسم": document.getElementById('editSection').value,
+            "نوع الوحدة": document.getElementById('editType').value,
+            "المنطقة": document.getElementById('editRegion').value,
+            "المساحة": document.getElementById('editArea').value,
+            "السعر الإجمالي": document.getElementById('editPrice').value,
+            "المقدم": document.getElementById('editDownPayment').value,
+            "نظام التقسيط": document.getElementById('editInstallment').value,
+            "عدد الغرف": document.getElementById('editRooms').value,
+            "الوصف التسويقي": document.getElementById('editDesc').value,
+            "رابط الصور": currentEditingImages.join(', ')
+        };
 
-                var delBtn = card.querySelector('.remove-img');
-                if (delBtn) delBtn.onclick = function() { removeImage(index); };
-
-                container.appendChild(card);
+        try {
+            const response = await fetch(N8N_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedPayload)
             });
-        }
 
-        function setAsMainImage(index) {
-            if (index > 0 && index < currentEditingImages.length) {
-                const selectedImg = currentEditingImages.splice(index, 1)[0];
-                currentEditingImages.unshift(selectedImg);
-                renderEditImagesUI();
+            if (response.ok) {
+                alert('تم حفظ التعديلات بنجاح!');
+                closeModal();
+                fetchProperties();
+            } else {
+                alert('حدث خطأ أثناء حفظ التعديلات.');
             }
+        } catch (error) {
+            console.error('Error updating:', error);
+            alert('فشل الاتصال بالسيرفر.');
+        } finally {
+            saveBtn.innerText = 'حفظ التعديلات';
+            saveBtn.disabled = false;
         }
+    }
 
-        function removeImage(index) {
-            currentEditingImages.splice(index, 1);
-            renderEditImagesUI();
-        }
-
-        function closeModal() {
-            document.getElementById('editModal').classList.remove('active');
-        }
-
-        // 7️⃣ إرسال التعديلات لـ n8n
-        async function submitUpdate() {
-            const saveBtn = document.getElementById('saveModalBtn');
-            saveBtn.innerText = 'جاري الحفظ...';
-            saveBtn.disabled = true;
-
-            const updatedPayload = {
-                action: "update",
-                "كود الوحدة": document.getElementById('editCode').value,
-                "القسم": document.getElementById('editSection').value,
-                "نوع الوحدة": document.getElementById('editType').value,
-                "المنطقة": document.getElementById('editRegion').value,
-                "المساحة": document.getElementById('editArea').value,
-                "السعر الإجمالي": document.getElementById('editPrice').value,
-                "المقدم": document.getElementById('editDownPayment').value,
-                "نظام التقسيط": document.getElementById('editInstallment').value,
-                "عدد الغرف": document.getElementById('editRooms').value,
-                "الوصف التسويقي": document.getElementById('editDesc').value,
-                "رابط الصور": currentEditingImages.join(', ')
-            };
-
-            try {
-                const response = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedPayload)
-                });
-
-                if (response.ok) {
-                    alert('تم حفظ التعديلات بنجاح!');
-                    closeModal();
-                    fetchProperties();
-                } else {
-                    alert('حدث خطأ أثناء حفظ التعديلات.');
-                }
-            } catch (error) {
-                console.error('Error updating:', error);
-                alert('فشل الاتصال بالسيرفر.');
-            } finally {
-                saveBtn.innerText = 'حفظ التعديلات';
-                saveBtn.disabled = false;
-            }
-        }
-
-        // بدء التشغيل
-        fetchProperties();
-    </script>
+    // بدء التشغيل
+    fetchProperties();
+</script>
