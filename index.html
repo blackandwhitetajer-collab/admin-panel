@@ -570,7 +570,7 @@
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
+<!-- JavaScript Logic المحدث -->
     <script>
         const N8N_WEBHOOK_URL = 'https://n8n.hellolucidagency.com/webhook/properties'; 
         const CLOUDINARY_CLOUD_NAME = 'fig3bixy';
@@ -591,12 +591,18 @@
         function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
         function closeModal() { document.getElementById('editModal').classList.remove('active'); }
 
+        // دالة جلب القيم مع تنظيف مرن للأحرف والمسافات (الألف والياء)
         function getVal(obj, fieldName) {
             if (!obj) return '';
             if (obj[fieldName] !== undefined && obj[fieldName] !== null && String(obj[fieldName]).trim() !== '') {
                 return String(obj[fieldName]).trim();
             }
-            const clean = (s) => String(s || '').replace(/[أإآ]/g, 'ا').replace(/\s+/g, ' ').trim();
+            const clean = (s) => String(s || '')
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ى/g, 'ي')
+                .replace(/\s+/g, ' ')
+                .trim();
+
             const target = clean(fieldName);
             for (let key in obj) {
                 if (clean(key) === target) {
@@ -605,6 +611,17 @@
                 }
             }
             return '';
+        }
+
+        // دالة مخصصة تضمن قراءة السعر بأي مسمى في شيت جوجل
+        function getPriceVal(unit) {
+            return getVal(unit, 'السعر الإجمالي') || 
+                   getVal(unit, 'السعر الاجمالي') || 
+                   getVal(unit, 'السعر الإجمالى') || 
+                   getVal(unit, 'إجمالي السعر') || 
+                   getVal(unit, 'اجمالي السعر') || 
+                   getVal(unit, 'السعر') || 
+                   getVal(unit, 'price') || '';
         }
 
         function formatImageUrl(url) {
@@ -625,7 +642,7 @@
                 .filter(img => img.length > 0);
         }
 
-        // إدارة المعاينة الحية للصور عند الإضافة
+        // معاينة صور الإضافة
         function handleAddFilesSelected(input) {
             const files = Array.from(input.files);
             if (addSelectedFiles.length + files.length > 10) {
@@ -675,7 +692,7 @@
             renderAddThumbs();
         }
 
-        // إدارة الصور في شاشة التعديل
+        // معاينة صور التعديل
         function handleEditNewFilesSelected(input) {
             const files = Array.from(input.files);
             if (editExistingUrls.length + editNewFiles.length + files.length > 10) {
@@ -752,7 +769,7 @@
             renderEditThumbs();
         }
 
-        // الرفع لـ Cloudinary
+        // رفع الصور لـ Cloudinary
         async function uploadFilesListToCloudinary(filesArray) {
             if (filesArray.length === 0) return [];
             const uploadedUrls = [];
@@ -781,7 +798,7 @@
             return uploadedUrls;
         }
 
-        // التعامل مع n8n
+        // جلب العقارات
         async function fetchProperties() {
             try {
                 const response = await fetch(N8N_WEBHOOK_URL, {
@@ -819,7 +836,7 @@
                 const unitType = getVal(item, 'نوع الوحدة');
                 const section = getVal(item, 'القسم');
                 const region = getVal(item, 'المنطقة');
-                const price = getVal(item, 'السعر الإجمالي') || getVal(item, 'السعر الاجمالي');
+                const price = getPriceVal(item);
 
                 const card = document.createElement('div');
                 card.className = 'property-card';
@@ -861,6 +878,8 @@
 
             saveBtn.innerText = 'جاري حفظ البيانات...';
 
+            const addPriceVal = document.getElementById('addPrice').value;
+
             const newPropertyPayload = {
                 action: "add",
                 "كود الوحدة": document.getElementById('addCode').value,
@@ -868,7 +887,8 @@
                 "نوع الوحدة": document.getElementById('addType').value,
                 "المنطقة": document.getElementById('addRegion').value,
                 "المساحة": document.getElementById('addArea').value,
-                "السعر الإجمالي": document.getElementById('addPrice').value,
+                "السعر الإجمالي": addPriceVal,
+                "إجمالي السعر": addPriceVal,
                 "المقدم": document.getElementById('addDownPayment').value,
                 "نظام التقسيط": document.getElementById('addInstallment').value,
                 "عدد الغرف": document.getElementById('addRooms').value,
@@ -901,7 +921,7 @@
             }
         }
 
-        // فتح التعديل
+        // فتح نافذة التعديل مع ملء السعر بدقة
         function openEditModal(code) {
             const unit = allProperties.find(p => getVal(p, 'كود الوحدة') === String(code));
             if (!unit) return;
@@ -911,7 +931,10 @@
             document.getElementById('editType').value = getVal(unit, 'نوع الوحدة');
             document.getElementById('editRegion').value = getVal(unit, 'المنطقة');
             document.getElementById('editArea').value = getVal(unit, 'المساحة');
-            document.getElementById('editPrice').value = getVal(unit, 'السعر الإجمالي') || getVal(unit, 'السعر الاجمالي');
+            
+            // جلب السعر بأي صيغة كان محفوظاً بها في الشيت
+            document.getElementById('editPrice').value = getPriceVal(unit);
+            
             document.getElementById('editDownPayment').value = getVal(unit, 'المقدم');
             document.getElementById('editInstallment').value = getVal(unit, 'نظام التقسيط');
             document.getElementById('editRooms').value = getVal(unit, 'عدد الغرف');
@@ -924,7 +947,7 @@
             document.getElementById('editModal').classList.add('active');
         }
 
-        // حفظ التعديل
+        // حفظ التعديلات
         async function submitUpdate() {
             const saveBtn = document.getElementById('saveModalBtn');
             saveBtn.innerText = 'جاري المعالجة...';
@@ -941,6 +964,7 @@
             }
 
             const finalImagesList = editExistingUrls.concat(newlyUploadedUrls);
+            const priceValue = document.getElementById('editPrice').value;
 
             saveBtn.innerText = 'جاري التحديث...';
 
@@ -951,7 +975,8 @@
                 "نوع الوحدة": document.getElementById('editType').value,
                 "المنطقة": document.getElementById('editRegion').value,
                 "المساحة": document.getElementById('editArea').value,
-                "السعر الإجمالي": document.getElementById('editPrice').value,
+                "السعر الإجمالي": priceValue,
+                "إجمالي السعر": priceValue,
                 "المقدم": document.getElementById('editDownPayment').value,
                 "نظام التقسيط": document.getElementById('editInstallment').value,
                 "عدد الغرف": document.getElementById('editRooms').value,
@@ -983,5 +1008,3 @@
 
         fetchProperties();
     </script>
-</body>
-</html>
