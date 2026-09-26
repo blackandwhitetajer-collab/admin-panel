@@ -82,10 +82,6 @@
             color: white;
         }
 
-        .btn-primary:active {
-            transform: scale(0.98);
-        }
-
         .btn-success {
             background-color: #16a34a;
             color: white;
@@ -230,7 +226,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: 1fr; /* عمود واحد للموبايل لراحة العين */
+            grid-template-columns: 1fr;
             gap: 12px;
             margin-top: 15px;
         }
@@ -247,7 +243,6 @@
             color: var(--text-main);
         }
 
-        /* منع زوم الآيفون بتثبيت الخط عند 16px */
         .form-group input, 
         .form-group textarea {
             padding: 11px;
@@ -265,13 +260,13 @@
             background: white;
         }
 
-        /* 📸 زرار الرفع الاحترافي الجديد */
+        /* 📸 زرار الرفع ومعرض الصور المصغرة المطور */
         .upload-box {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 18px;
+            padding: 16px;
             border: 2px dashed var(--primary-color);
             background: #eff6ff;
             border-radius: 12px;
@@ -282,37 +277,87 @@
 
         .upload-box:active {
             background: #dbeafe;
-            transform: scale(0.99);
         }
 
         .upload-icon {
-            font-size: 2.2rem;
-            margin-bottom: 4px;
+            font-size: 2rem;
+            margin-bottom: 2px;
         }
 
         .upload-text {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: bold;
             color: #1e40af;
         }
 
         .upload-hint {
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             color: #64748b;
-            margin-top: 2px;
         }
 
-        .selected-files-badge {
-            margin-top: 8px;
-            padding: 8px 12px;
-            background: #dcfce7;
-            color: #15803d;
-            border: 1px solid #86efac;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            text-align: center;
+        /* شبكة معينات الصور المصغرة */
+        .thumbs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
         }
+
+        .thumb-card {
+            position: relative;
+            height: 85px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            background: #1e293b;
+        }
+
+        .thumb-card.is-main {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.3);
+        }
+
+        .thumb-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumb-main-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #16a34a;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        .thumb-actions {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.85);
+            display: flex;
+            justify-content: space-around;
+            padding: 3px;
+        }
+
+        .btn-thumb {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 0.7rem;
+            cursor: pointer;
+            padding: 2px 4px;
+        }
+
+        .btn-thumb.del { color: #f87171; }
+        .btn-thumb.star { color: #facc15; }
 
         .modal-actions {
             display: flex;
@@ -404,18 +449,19 @@
                         <textarea id="addDesc" rows="3" placeholder="اكتبي تفاصيل العقار..."></textarea>
                     </div>
 
-                    <!-- 📸 رفع الصور المحسّن -->
+                    <!-- 📸 رفع المعاينة الحية في الإضافة -->
                     <div class="form-group full-width">
-                        <label>صور العقار</label>
-                        <input type="file" id="addImagesInput" multiple accept="image/*" style="display: none;" onchange="updateFileCountLabel(this)">
+                        <label id="addImagesLabel">صور العقار (يمكن إضافة حتى 10 صور)</label>
+                        <input type="file" id="addImagesInput" multiple accept="image/*" style="display: none;" onchange="handleAddFilesSelected(this)">
                         
-                        <label for="addImagesInput" class="upload-box">
+                        <label for="addImagesInput" class="upload-box" id="addUploadBox">
                             <span class="upload-icon">📸</span>
                             <span class="upload-text">اضغطي هنا لاختيار الصور</span>
-                            <span class="upload-hint">(يمكن اختيار حتى 10 صور كحد أقصى)</span>
+                            <span class="upload-hint">(اختر حتى 10 صور - الأولى هي الرئيسية)</span>
                         </label>
-                        
-                        <div id="selectedFilesBadge" class="selected-files-badge" style="display: none;"></div>
+
+                        <!-- معينات الصور المصغرة للإضافة -->
+                        <div id="addThumbsContainer" class="thumbs-grid"></div>
                     </div>
                 </div>
 
@@ -475,6 +521,20 @@
                         <label>الوصف التسويقي</label>
                         <textarea id="editDesc" rows="3"></textarea>
                     </div>
+
+                    <!-- 📸 إدارة وصور العقار والتعديل والإضافة -->
+                    <div class="form-group full-width">
+                        <label>صور العقار الحالية والجديدة</label>
+                        <div id="editThumbsContainer" class="thumbs-grid"></div>
+
+                        <!-- زرار إضافة صور جديدة في التعديل -->
+                        <div style="margin-top: 10px;">
+                            <input type="file" id="editNewImagesInput" multiple accept="image/*" style="display: none;" onchange="handleEditNewFilesSelected(this)">
+                            <label for="editNewImagesInput" class="upload-box" id="editUploadBox" style="padding: 10px;">
+                                <span style="font-size: 0.9rem; font-weight: bold; color: #1e40af;">➕ إضافة صور جديدة لهذا العقار</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="modal-actions">
@@ -485,34 +545,28 @@
         </div>
     </div>
 
-    <!-- 3️⃣ المنطق والـ JavaScript -->
+    <!-- 3️⃣ المنطق والـ JavaScript الكامل -->
     <script>
-        const N8N_WEBHOOK_URL = 'https://n8n.hellolucidagency.com/webhook/properties ';
+        const N8N_WEBHOOK_URL = 'https://n8n.hellolucidagency.com/webhook/properties'; 
         const CLOUDINARY_CLOUD_NAME = 'fig3bixy';
         const CLOUDINARY_PRESET = 'properties_preset';
 
         let allProperties = [];
+        
+        // مصفوفات حالة الصور
+        let addSelectedFiles = [];       // صور العقار الجديد (File Objects)
+        let editExistingUrls = [];       // روابط الصور الموجودة أصلاً لـ العقار (Strings)
+        let editNewFiles = [];           // صور إضافية جديدة للتعديل (File Objects)
 
-        function openAddModal() { document.getElementById('addModal').classList.add('active'); }
+        function openAddModal() {
+            addSelectedFiles = [];
+            document.getElementById('addImagesInput').value = '';
+            renderAddThumbs();
+            document.getElementById('addModal').classList.add('active');
+        }
+
         function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
         function closeModal() { document.getElementById('editModal').classList.remove('active'); }
-
-        // إظهار عدد الصور المختارة بشريط جذاب
-        function updateFileCountLabel(input) {
-            const badge = document.getElementById('selectedFilesBadge');
-            if (input.files && input.files.length > 0) {
-                if (input.files.length > 10) {
-                    alert('⚠️ الحد الأقصى المسموح به هو 10 صور فقط.');
-                    input.value = '';
-                    badge.style.display = 'none';
-                    return;
-                }
-                badge.style.display = 'block';
-                badge.innerHTML = `✅ تم اختيار <b>${input.files.length}</b> صور جاهزة للرفع`;
-            } else {
-                badge.style.display = 'none';
-            }
-        }
 
         function getVal(obj, fieldName) {
             if (!obj) return '';
@@ -548,20 +602,162 @@
                 .filter(img => img.length > 0);
         }
 
-        // رفع الصور لـ Cloudinary
-        async function uploadImagesToCloudinary(fileInput) {
-            const files = Array.from(fileInput.files);
-            if (files.length === 0) return [];
-
-            if (files.length > 10) {
-                alert('⚠️ عفواً، الحد الأقصى هو 10 صور فقط لكل عقار.');
-                return null;
+        // ==========================================
+        // 📸 إدارة معينات الصور المصغرة في "الإضافة"
+        // ==========================================
+        function handleAddFilesSelected(input) {
+            const files = Array.from(input.files);
+            if (addSelectedFiles.length + files.length > 10) {
+                alert('⚠️ الحد الأقصى المسموح به هو 10 صور فقط كحد أقصى.');
+                return;
             }
+            addSelectedFiles = addSelectedFiles.concat(files);
+            input.value = ''; // تفريغ الخانة للسماح بالسيليكت المجدد
+            renderAddThumbs();
+        }
 
+        function renderAddThumbs() {
+            const container = document.getElementById('addThumbsContainer');
+            container.innerHTML = '';
+
+            addSelectedFiles.forEach((file, index) => {
+                const isMain = index === 0;
+                const tempUrl = URL.createObjectURL(file);
+
+                const card = document.createElement('div');
+                card.className = 'thumb-card' + (isMain ? ' is-main' : '');
+                
+                card.innerHTML = `
+                    ${isMain ? '<span class="thumb-main-badge">الرئيسية</span>' : ''}
+                    <img src="${tempUrl}" alt="معاينة">
+                    <div class="thumb-actions">
+                        ${!isMain ? `<button type="button" class="btn-thumb star" onclick="setAddMainImage(${index})">⭐ رئيسية</button>` : ''}
+                        <button type="button" class="btn-thumb del" onclick="removeAddImage(${index})">🗑️ حذف</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // تحديث زرار الرفع
+            const uploadBox = document.getElementById('addUploadBox');
+            if (addSelectedFiles.length >= 10) {
+                uploadBox.style.display = 'none';
+            } else {
+                uploadBox.style.display = 'flex';
+            }
+        }
+
+        function setAddMainImage(index) {
+            if (index > 0 && index < addSelectedFiles.length) {
+                const picked = addSelectedFiles.splice(index, 1)[0];
+                addSelectedFiles.unshift(picked);
+                renderAddThumbs();
+            }
+        }
+
+        function removeAddImage(index) {
+            addSelectedFiles.splice(index, 1);
+            renderAddThumbs();
+        }
+
+        // ==========================================
+        // 📸 إدارة الصور في شاشة "التعديل" (قديمة + جديدة)
+        // ==========================================
+        function handleEditNewFilesSelected(input) {
+            const files = Array.from(input.files);
+            const totalCount = editExistingUrls.length + editNewFiles.length + files.length;
+            if (totalCount > 10) {
+                alert('⚠️ مجموع الصور الحالي والجديد لا يمكن أن يتجاوز 10 صور.');
+                return;
+            }
+            editNewFiles = editNewFiles.concat(files);
+            input.value = '';
+            renderEditThumbs();
+        }
+
+        function renderEditThumbs() {
+            const container = document.getElementById('editThumbsContainer');
+            container.innerHTML = '';
+
+            // 1. عرض الصور القديمة أولاً
+            editExistingUrls.forEach((url, index) => {
+                const isMain = index === 0;
+                const card = document.createElement('div');
+                card.className = 'thumb-card' + (isMain ? ' is-main' : '');
+                
+                card.innerHTML = `
+                    ${isMain ? '<span class="thumb-main-badge">الرئيسية</span>' : ''}
+                    <img src="${formatImageUrl(url)}" alt="صورة">
+                    <div class="thumb-actions">
+                        ${!isMain ? `<button type="button" class="btn-thumb star" onclick="setEditExistingMain(${index})">⭐ رئيسية</button>` : ''}
+                        <button type="button" class="btn-thumb del" onclick="removeEditExistingImage(${index})">🗑️ حذف</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // 2. عرض الصور الجديدة المضافة محلياً
+            editNewFiles.forEach((file, index) => {
+                const globalIndex = editExistingUrls.length + index;
+                const isMain = globalIndex === 0;
+                const tempUrl = URL.createObjectURL(file);
+
+                const card = document.createElement('div');
+                card.className = 'thumb-card' + (isMain ? ' is-main' : '');
+                
+                card.innerHTML = `
+                    <span style="position:absolute; top:2px; left:2px; background:#2563eb; color:white; font-size:0.6rem; padding:1px 3px; border-radius:3px;">جديدة</span>
+                    ${isMain ? '<span class="thumb-main-badge">الرئيسية</span>' : ''}
+                    <img src="${tempUrl}" alt="صورة">
+                    <div class="thumb-actions">
+                        ${!isMain ? `<button type="button" class="btn-thumb star" onclick="setEditNewMain(${index})">⭐ رئيسية</button>` : ''}
+                        <button type="button" class="btn-thumb del" onclick="removeEditNewImage(${index})">🗑️ حذف</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // إخفاء أو إظهار زرار الإضافة
+            const total = editExistingUrls.length + editNewFiles.length;
+            document.getElementById('editUploadBox').style.display = total >= 10 ? 'none' : 'block';
+        }
+
+        function setEditExistingMain(index) {
+            const picked = editExistingUrls.splice(index, 1)[0];
+            editExistingUrls.unshift(picked);
+            renderEditThumbs();
+        }
+
+        function removeEditExistingImage(index) {
+            editExistingUrls.splice(index, 1);
+            renderEditThumbs();
+        }
+
+        function setEditNewMain(index) {
+            const picked = editNewFiles.splice(index, 1)[0];
+            // لو خليناها رئيسية نحولها لأول المصفوفة
+            if (editExistingUrls.length > 0) {
+                // نسحبها ونحطها في بداية الصور المرفوعة بعد رفعه لـ كلاوديناري عند الحفظ
+            }
+            editNewFiles.splice(index, 1);
+            editNewFiles.unshift(picked);
+            renderEditThumbs();
+        }
+
+        function removeEditNewImage(index) {
+            editNewFiles.splice(index, 1);
+            renderEditThumbs();
+        }
+
+        // ==========================================
+        // 📤 دالة الرفع الفعلية لـ Cloudinary
+        // ==========================================
+        async function uploadFilesListToCloudinary(filesArray) {
+            if (filesArray.length === 0) return [];
             const uploadedUrls = [];
-            for (let i = 0; i < files.length; i++) {
+            for (let i = 0; i < filesArray.length; i++) {
                 const formData = new FormData();
-                formData.append('file', files[i]);
+                formData.append('file', filesArray[i]);
                 formData.append('upload_preset', CLOUDINARY_PRESET);
 
                 try {
@@ -570,7 +766,6 @@
                         body: formData
                     });
                     const data = await res.json();
-                    
                     if (data.secure_url) {
                         uploadedUrls.push(data.secure_url);
                     } else {
@@ -585,7 +780,9 @@
             return uploadedUrls;
         }
 
-        // جلب العقارات
+        // ==========================================
+        // 🔄 التعامل مع n8n والسيرفر
+        // ==========================================
         async function fetchProperties() {
             try {
                 const response = await fetch(N8N_WEBHOOK_URL, {
@@ -594,9 +791,7 @@
                     body: JSON.stringify({ action: "get" })
                 });
 
-                if (!response.ok) {
-                    throw new Error('رمز استجابة السيرفر: ' + response.status);
-                }
+                if (!response.ok) throw new Error('رمز استجابة السيرفر: ' + response.status);
 
                 const data = await response.json();
                 allProperties = Array.isArray(data) ? data : (data.data || []);
@@ -649,19 +844,20 @@
             });
         }
 
-        // إضافة عقار جديد
+        // إرسال عقار جديد
         async function submitAddProperty() {
-            const fileInput = document.getElementById('addImagesInput');
             const saveBtn = document.getElementById('saveAddBtn');
-            
             saveBtn.innerText = '⏳ جاري رفع الصور...';
             saveBtn.disabled = true;
 
-            const uploadedUrls = await uploadImagesToCloudinary(fileInput);
-            if (uploadedUrls === null) {
-                saveBtn.innerText = 'حفظ العقار';
-                saveBtn.disabled = false;
-                return; 
+            let uploadedUrls = [];
+            if (addSelectedFiles.length > 0) {
+                uploadedUrls = await uploadFilesListToCloudinary(addSelectedFiles);
+                if (uploadedUrls === null) {
+                    saveBtn.innerText = 'حفظ العقار';
+                    saveBtn.disabled = false;
+                    return; 
+                }
             }
 
             saveBtn.innerText = '⏳ جاري تسجيل العقار في الشيت...';
@@ -692,10 +888,9 @@
                     alert('✅ تم تسجيل العقار الجديد في Google Sheets بنجاح!');
                     closeAddModal();
                     
-                    // تفريغ البيانات
                     document.getElementById('addCode').value = '';
-                    document.getElementById('addImagesInput').value = '';
-                    document.getElementById('selectedFilesBadge').style.display = 'none';
+                    addSelectedFiles = [];
+                    renderAddThumbs();
                     
                     fetchProperties();
                 } else {
@@ -709,6 +904,7 @@
             }
         }
 
+        // فتح التعديل
         function openEditModal(code) {
             const unit = allProperties.find(p => getVal(p, 'كود الوحدة') === String(code));
             if (!unit) return;
@@ -724,13 +920,34 @@
             document.getElementById('editRooms').value = getVal(unit, 'عدد الغرف');
             document.getElementById('editDesc').value = getVal(unit, 'الوصف التسويقي');
 
+            editExistingUrls = parseImages(getVal(unit, 'رابط الصور'));
+            editNewFiles = [];
+            renderEditThumbs();
+
             document.getElementById('editModal').classList.add('active');
         }
 
+        // حفظ التعديلات
         async function submitUpdate() {
             const saveBtn = document.getElementById('saveModalBtn');
-            saveBtn.innerText = 'جاري الحفظ...';
+            saveBtn.innerText = '⏳ جاري رفع الصور الجديدة...';
             saveBtn.disabled = true;
+
+            // 1. رفع الصور الجديدة لو وُجدت
+            let newlyUploadedUrls = [];
+            if (editNewFiles.length > 0) {
+                newlyUploadedUrls = await uploadFilesListToCloudinary(editNewFiles);
+                if (newlyUploadedUrls === null) {
+                    saveBtn.innerText = 'حفظ التعديلات';
+                    saveBtn.disabled = false;
+                    return;
+                }
+            }
+
+            // 2. دمج الصور القديمة المتبقية مع الجديدة المرفوعة
+            const finalImagesList = editExistingUrls.concat(newlyUploadedUrls);
+
+            saveBtn.innerText = '⏳ جاري الحفظ...';
 
             const updatedPayload = {
                 action: "update",
@@ -743,7 +960,8 @@
                 "المقدم": document.getElementById('editDownPayment').value,
                 "نظام التقسيط": document.getElementById('editInstallment').value,
                 "عدد الغرف": document.getElementById('editRooms').value,
-                "الوصف التسويقي": document.getElementById('editDesc').value
+                "الوصف التسويقي": document.getElementById('editDesc').value,
+                "رابط الصور": finalImagesList.join(', ')
             };
 
             try {
@@ -754,7 +972,7 @@
                 });
 
                 if (response.ok) {
-                    alert('✅ تم حفظ التعديلات بنجاح!');
+                    alert('✅ تم حفظ التعديلات وتحديث الصور بنجاح!');
                     closeModal();
                     fetchProperties();
                 } else {
