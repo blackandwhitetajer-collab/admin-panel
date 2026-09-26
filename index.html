@@ -3,18 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>لوحة إدارة العقارات</title>
+    <title>لوحة إدارة العقارات الاحترافية</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-color: #f8fafc;
+            --primary-navy: #0f172a;
+            --secondary-slate: #334155;
+            --accent-blue: #2563eb;
+            --accent-green: #15803d;
+            --danger-red: #dc2626;
+            --bg-neutral: #f8fafc;
             --card-bg: #ffffff;
-            --text-main: #0f172a;
+            --border-light: #e2e8f0;
+            --text-dark: #0f172a;
             --text-muted: #64748b;
-            --border-color: #cbd5e1;
-            --border-radius: 12px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
         }
 
         * {
@@ -26,9 +30,9 @@
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 12px;
+            background-color: var(--bg-neutral);
+            color: var(--text-dark);
+            padding: 16px;
             direction: rtl;
         }
 
@@ -39,57 +43,66 @@
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
-            padding: 10px 0;
+            margin-bottom: 24px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-light);
         }
 
         .header h1 {
-            color: var(--primary-color);
-            font-size: 1.6rem;
-            margin-bottom: 4px;
+            color: var(--primary-navy);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .header p {
             color: var(--text-muted);
             font-size: 0.85rem;
+            margin-top: 4px;
         }
 
         .action-bar {
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             margin-bottom: 20px;
         }
 
         .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
+            padding: 10px 20px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
             cursor: pointer;
-            font-weight: 700;
-            font-size: 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
+            background-color: var(--primary-navy);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-slate);
         }
 
         .btn-success {
-            background-color: #16a34a;
-            color: white;
+            background-color: var(--accent-green);
+            color: #ffffff;
         }
 
         .btn-secondary {
-            background-color: #64748b;
-            color: white;
+            background-color: #ffffff;
+            color: var(--text-dark);
+            border-color: var(--border-light);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f1f5f9;
         }
 
         /* شبكة الكروت */
@@ -101,25 +114,29 @@
 
         .property-card {
             background: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
-            border: 1px solid var(--border-color);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .property-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         }
 
         .badge-code {
             position: absolute;
             top: 10px;
             right: 10px;
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.9);
             color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
             z-index: 2;
         }
 
@@ -140,49 +157,48 @@
             position: absolute;
             bottom: 8px;
             left: 8px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(15, 23, 42, 0.75);
             color: white;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
         }
 
         .card-content {
-            padding: 12px 15px;
+            padding: 14px;
             flex-grow: 1;
         }
 
         .card-title {
-            font-size: 1.05rem;
-            margin-bottom: 6px;
-            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-dark);
         }
 
         .card-location {
             color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-bottom: 8px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
         }
 
         .card-price {
-            font-size: 1.15rem;
-            font-weight: bold;
-            color: var(--primary-color);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-navy);
         }
 
         .card-actions {
-            padding: 10px 15px;
+            padding: 10px 14px;
             background: #f8fafc;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-light);
         }
 
         .card-actions .btn {
             width: 100%;
-            font-size: 0.9rem;
-            padding: 10px;
         }
 
-        /* النوافذ والـ Modals للموبايل */
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -203,102 +219,115 @@
         }
 
         .modal-content {
-            background: white;
-            padding: 20px 16px;
-            border-radius: 16px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: var(--radius-lg);
             width: 100%;
-            max-width: 550px;
+            max-width: 580px;
             max-height: 90vh;
             overflow-y: auto;
             position: relative;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-light);
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary-navy);
         }
 
         .close-btn {
-            position: absolute;
-            left: 15px;
-            top: 12px;
-            font-size: 28px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
             cursor: pointer;
             color: var(--text-muted);
-            padding: 5px;
+            line-height: 1;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 12px;
-            margin-top: 15px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
 
         .form-group label {
-            font-size: 0.88rem;
-            font-weight: bold;
-            color: var(--text-main);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--secondary-slate);
         }
 
         .form-group input, 
         .form-group textarea {
-            padding: 11px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
             font-size: 16px !important; 
             outline: none;
-            background: #f8fafc;
+            background: #ffffff;
             width: 100%;
+            color: var(--text-dark);
+            transition: border-color 0.2s ease;
         }
 
         .form-group input:focus, 
         .form-group textarea:focus {
-            border-color: var(--primary-color);
-            background: white;
+            border-color: var(--primary-navy);
         }
 
-        /* 📸 زرار الرفع ومعرض الصور المصغرة المطور */
-        .upload-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            border: 2px dashed var(--primary-color);
-            background: #eff6ff;
-            border-radius: 12px;
-            cursor: pointer;
+        /* منطقة رفع الصور الحديثة */
+        .upload-dropzone {
+            border: 1px dashed var(--secondary-slate);
+            background: #f8fafc;
+            border-radius: var(--radius-md);
+            padding: 20px;
             text-align: center;
-            transition: all 0.2s ease;
+            cursor: pointer;
+            transition: background 0.2s ease;
         }
 
-        .upload-box:active {
-            background: #dbeafe;
+        .upload-dropzone:hover {
+            background: #f1f5f9;
         }
 
-        .upload-icon {
-            font-size: 2rem;
-            margin-bottom: 2px;
+        .upload-icon-svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--secondary-slate);
+            margin-bottom: 6px;
         }
 
-        .upload-text {
-            font-size: 0.9rem;
-            font-weight: bold;
-            color: #1e40af;
+        .upload-text-main {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary-navy);
         }
 
-        .upload-hint {
+        .upload-text-sub {
             font-size: 0.75rem;
-            color: #64748b;
+            color: var(--text-muted);
+            margin-top: 2px;
         }
 
-        /* شبكة معينات الصور المصغرة */
+        /* شبكة معينات الصور */
         .thumbs-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
             gap: 8px;
             margin-top: 10px;
         }
@@ -306,15 +335,14 @@
         .thumb-card {
             position: relative;
             height: 85px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             overflow: hidden;
-            border: 2px solid var(--border-color);
-            background: #1e293b;
+            border: 1px solid var(--border-light);
+            background: #0f172a;
         }
 
         .thumb-card.is-main {
-            border-color: #16a34a;
-            box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.3);
+            border: 2px solid var(--accent-green);
         }
 
         .thumb-card img {
@@ -323,61 +351,56 @@
             object-fit: cover;
         }
 
-        .thumb-main-badge {
+        .thumb-main-tag {
             position: absolute;
-            top: 2px;
-            right: 2px;
-            background: #16a34a;
+            top: 4px;
+            right: 4px;
+            background: var(--accent-green);
             color: white;
-            font-size: 0.65rem;
-            font-weight: bold;
-            padding: 2px 4px;
-            border-radius: 4px;
-            z-index: 2;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 3px;
         }
 
-        .thumb-actions {
+        .thumb-overlay-actions {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
             background: rgba(15, 23, 42, 0.85);
             display: flex;
-            justify-content: space-around;
-            padding: 3px;
+            justify-content: space-between;
+            padding: 3px 5px;
         }
 
-        .btn-thumb {
+        .btn-action-mini {
             background: none;
             border: none;
-            color: white;
-            font-size: 0.7rem;
+            color: #ffffff;
+            font-size: 0.65rem;
             cursor: pointer;
-            padding: 2px 4px;
+            padding: 2px;
         }
 
-        .btn-thumb.del { color: #f87171; }
-        .btn-thumb.star { color: #facc15; }
+        .btn-action-mini.danger { color: #f87171; }
 
         .modal-actions {
             display: flex;
             gap: 10px;
             margin-top: 20px;
-            padding-bottom: 5px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-light);
         }
 
         .modal-actions .btn {
             flex: 1;
-            padding: 12px;
-            font-size: 0.95rem;
         }
 
         @media (min-width: 640px) {
             body { padding: 24px; }
             .form-grid { grid-template-columns: 1fr 1fr; }
             .form-group.full-width { grid-column: span 2; }
-            .modal-content { padding: 25px; }
-            .header h1 { font-size: 2rem; }
         }
     </style>
 </head>
@@ -386,12 +409,12 @@
     <div class="container">
         <div class="header">
             <h1>لوحة إدارة العقارات</h1>
-            <p>إدارة وتحديث بيانات العقارات بسهولة من الموبايل</p>
+            <p>إدارة وتحديث بيانات الوحدات السكنية والتجارية</p>
         </div>
 
         <div class="action-bar">
             <button type="button" class="btn btn-primary" onclick="openAddModal()">
-                ➕ إضافة عقار جديد
+                إضافة عقار جديد
             </button>
         </div>
 
@@ -403,8 +426,10 @@
     <!-- 1️⃣ نافذة إضافة عقار جديد -->
     <div id="addModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeAddModal()">&times;</span>
-            <h2 style="font-size: 1.3rem;">➕ إضافة عقار جديد</h2>
+            <div class="modal-header">
+                <h2 class="modal-title">إضافة وحدة جديدة</h2>
+                <button class="close-btn" onclick="closeAddModal()">&times;</button>
+            </div>
             
             <form onsubmit="event.preventDefault(); submitAddProperty();">
                 <div class="form-grid">
@@ -422,23 +447,23 @@
                     </div>
                     <div class="form-group">
                         <label>المنطقة</label>
-                        <input type="text" id="addRegion" placeholder="مثال: حي الأشجار">
+                        <input type="text" id="addRegion" placeholder="مثال: الشيخ زايد">
                     </div>
                     <div class="form-group">
                         <label>المساحة</label>
-                        <input type="text" id="addArea" placeholder="مثال: 150 م">
+                        <input type="text" id="addArea" placeholder="مثال: 180 م2">
                     </div>
                     <div class="form-group">
                         <label>السعر الإجمالي</label>
-                        <input type="number" id="addPrice" placeholder="مثال: 2500000">
+                        <input type="number" id="addPrice" placeholder="مثال: 4500000">
                     </div>
                     <div class="form-group">
                         <label>المقدم</label>
-                        <input type="text" id="addDownPayment" placeholder="مثال: 500000">
+                        <input type="text" id="addDownPayment" placeholder="مثال: كاش / 10%">
                     </div>
                     <div class="form-group">
                         <label>نظام التقسيط</label>
-                        <input type="text" id="addInstallment" placeholder="مثال: على 5 سنوات">
+                        <input type="text" id="addInstallment" placeholder="مثال: كاش / 5 سنوات">
                     </div>
                     <div class="form-group">
                         <label>عدد الغرف</label>
@@ -446,21 +471,20 @@
                     </div>
                     <div class="form-group full-width">
                         <label>الوصف التسويقي</label>
-                        <textarea id="addDesc" rows="3" placeholder="اكتبي تفاصيل العقار..."></textarea>
+                        <textarea id="addDesc" rows="3" placeholder="أدخلي الوصف التفصيلي للوحدة..."></textarea>
                     </div>
 
-                    <!-- 📸 رفع المعاينة الحية في الإضافة -->
+                    <!-- رفع الصور في الإضافة -->
                     <div class="form-group full-width">
-                        <label id="addImagesLabel">صور العقار (يمكن إضافة حتى 10 صور)</label>
+                        <label>صور العقار</label>
                         <input type="file" id="addImagesInput" multiple accept="image/*" style="display: none;" onchange="handleAddFilesSelected(this)">
                         
-                        <label for="addImagesInput" class="upload-box" id="addUploadBox">
-                            <span class="upload-icon">📸</span>
-                            <span class="upload-text">اضغطي هنا لاختيار الصور</span>
-                            <span class="upload-hint">(اختر حتى 10 صور - الأولى هي الرئيسية)</span>
+                        <label for="addImagesInput" class="upload-dropzone" id="addUploadBox">
+                            <svg class="upload-icon-svg" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                            <div class="upload-text-main">اضغطي لاختيار الصور من الجهاز</div>
+                            <div class="upload-text-sub">(يمكن اختيار حتى 10 صور كحد أقصى - الأولى هي الرئيسية)</div>
                         </label>
 
-                        <!-- معينات الصور المصغرة للإضافة -->
                         <div id="addThumbsContainer" class="thumbs-grid"></div>
                     </div>
                 </div>
@@ -476,14 +500,16 @@
     <!-- 2️⃣ نافذة التعديل -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 style="font-size: 1.3rem;">📝 تعديل بيانات العقار</h2>
+            <div class="modal-header">
+                <h2 class="modal-title">تعديل بيانات العقار</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
             
             <form onsubmit="event.preventDefault(); submitUpdate();">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>كود الوحدة (مغلق)</label>
-                        <input type="text" id="editCode" readonly style="background:#e2e8f0;">
+                        <label>كود الوحدة</label>
+                        <input type="text" id="editCode" readonly style="background:#f1f5f9; color:#64748b;">
                     </div>
                     <div class="form-group">
                         <label>القسم</label>
@@ -522,16 +548,15 @@
                         <textarea id="editDesc" rows="3"></textarea>
                     </div>
 
-                    <!-- 📸 إدارة وصور العقار والتعديل والإضافة -->
+                    <!-- إدارة الصور في التعديل -->
                     <div class="form-group full-width">
-                        <label>صور العقار الحالية والجديدة</label>
+                        <label>معرض الصور الحالي</label>
                         <div id="editThumbsContainer" class="thumbs-grid"></div>
 
-                        <!-- زرار إضافة صور جديدة في التعديل -->
                         <div style="margin-top: 10px;">
                             <input type="file" id="editNewImagesInput" multiple accept="image/*" style="display: none;" onchange="handleEditNewFilesSelected(this)">
-                            <label for="editNewImagesInput" class="upload-box" id="editUploadBox" style="padding: 10px;">
-                                <span style="font-size: 0.9rem; font-weight: bold; color: #1e40af;">➕ إضافة صور جديدة لهذا العقار</span>
+                            <label for="editNewImagesInput" class="upload-dropzone" id="editUploadBox" style="padding: 10px;">
+                                <div class="upload-text-main" style="font-size: 0.8rem;">+ إضافة صور جديدة لهذا العقار</div>
                             </label>
                         </div>
                     </div>
@@ -545,18 +570,16 @@
         </div>
     </div>
 
-    <!-- 3️⃣ المنطق والـ JavaScript الكامل -->
+    <!-- JavaScript Logic -->
     <script>
         const N8N_WEBHOOK_URL = 'https://n8n.hellolucidagency.com/webhook/properties'; 
         const CLOUDINARY_CLOUD_NAME = 'fig3bixy';
         const CLOUDINARY_PRESET = 'properties_preset';
 
         let allProperties = [];
-        
-        // مصفوفات حالة الصور
-        let addSelectedFiles = [];       // صور العقار الجديد (File Objects)
-        let editExistingUrls = [];       // روابط الصور الموجودة أصلاً لـ العقار (Strings)
-        let editNewFiles = [];           // صور إضافية جديدة للتعديل (File Objects)
+        let addSelectedFiles = [];
+        let editExistingUrls = [];
+        let editNewFiles = [];
 
         function openAddModal() {
             addSelectedFiles = [];
@@ -602,17 +625,15 @@
                 .filter(img => img.length > 0);
         }
 
-        // ==========================================
-        // 📸 إدارة معينات الصور المصغرة في "الإضافة"
-        // ==========================================
+        // إدارة المعاينة الحية للصور عند الإضافة
         function handleAddFilesSelected(input) {
             const files = Array.from(input.files);
             if (addSelectedFiles.length + files.length > 10) {
-                alert('⚠️ الحد الأقصى المسموح به هو 10 صور فقط كحد أقصى.');
+                alert('الحد الأقصى المسموح به هو 10 صور فقط.');
                 return;
             }
             addSelectedFiles = addSelectedFiles.concat(files);
-            input.value = ''; // تفريغ الخانة للسماح بالسيليكت المجدد
+            input.value = '';
             renderAddThumbs();
         }
 
@@ -628,23 +649,17 @@
                 card.className = 'thumb-card' + (isMain ? ' is-main' : '');
                 
                 card.innerHTML = `
-                    ${isMain ? '<span class="thumb-main-badge">الرئيسية</span>' : ''}
-                    <img src="${tempUrl}" alt="معاينة">
-                    <div class="thumb-actions">
-                        ${!isMain ? `<button type="button" class="btn-thumb star" onclick="setAddMainImage(${index})">⭐ رئيسية</button>` : ''}
-                        <button type="button" class="btn-thumb del" onclick="removeAddImage(${index})">🗑️ حذف</button>
+                    ${isMain ? '<span class="thumb-main-tag">الرئيسية</span>' : ''}
+                    <img src="${tempUrl}" alt="صورة">
+                    <div class="thumb-overlay-actions">
+                        ${!isMain ? `<button type="button" class="btn-action-mini" onclick="setAddMainImage(${index})">تعيين رئيسية</button>` : '<span></span>'}
+                        <button type="button" class="btn-action-mini danger" onclick="removeAddImage(${index})">حذف</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
 
-            // تحديث زرار الرفع
-            const uploadBox = document.getElementById('addUploadBox');
-            if (addSelectedFiles.length >= 10) {
-                uploadBox.style.display = 'none';
-            } else {
-                uploadBox.style.display = 'flex';
-            }
+            document.getElementById('addUploadBox').style.display = addSelectedFiles.length >= 10 ? 'none' : 'block';
         }
 
         function setAddMainImage(index) {
@@ -660,14 +675,11 @@
             renderAddThumbs();
         }
 
-        // ==========================================
-        // 📸 إدارة الصور في شاشة "التعديل" (قديمة + جديدة)
-        // ==========================================
+        // إدارة الصور في شاشة التعديل
         function handleEditNewFilesSelected(input) {
             const files = Array.from(input.files);
-            const totalCount = editExistingUrls.length + editNewFiles.length + files.length;
-            if (totalCount > 10) {
-                alert('⚠️ مجموع الصور الحالي والجديد لا يمكن أن يتجاوز 10 صور.');
+            if (editExistingUrls.length + editNewFiles.length + files.length > 10) {
+                alert('العدد الإجمالي للصور لا يمكن أن يتجاوز 10 صور.');
                 return;
             }
             editNewFiles = editNewFiles.concat(files);
@@ -679,24 +691,22 @@
             const container = document.getElementById('editThumbsContainer');
             container.innerHTML = '';
 
-            // 1. عرض الصور القديمة أولاً
             editExistingUrls.forEach((url, index) => {
                 const isMain = index === 0;
                 const card = document.createElement('div');
                 card.className = 'thumb-card' + (isMain ? ' is-main' : '');
                 
                 card.innerHTML = `
-                    ${isMain ? '<span class="thumb-main-badge">الرئيسية</span>' : ''}
+                    ${isMain ? '<span class="thumb-main-tag">الرئيسية</span>' : ''}
                     <img src="${formatImageUrl(url)}" alt="صورة">
-                    <div class="thumb-actions">
-                        ${!isMain ? `<button type="button" class="btn-thumb star" onclick="setEditExistingMain(${index})">⭐ رئيسية</button>` : ''}
-                        <button type="button" class="btn-thumb del" onclick="removeEditExistingImage(${index})">🗑️ حذف</button>
+                    <div class="thumb-overlay-actions">
+                        ${!isMain ? `<button type="button" class="btn-action-mini" onclick="setEditExistingMain(${index})">تعيين رئيسية</button>` : '<span></span>'}
+                        <button type="button" class="btn-action-mini danger" onclick="removeEditExistingImage(${index})">حذف</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
 
-            // 2. عرض الصور الجديدة المضافة محلياً
             editNewFiles.forEach((file, index) => {
                 const globalIndex = editExistingUrls.length + index;
                 const isMain = globalIndex === 0;
@@ -706,18 +716,16 @@
                 card.className = 'thumb-card' + (isMain ? ' is-main' : '');
                 
                 card.innerHTML = `
-                    <span style="position:absolute; top:2px; left:2px; background:#2563eb; color:white; font-size:0.6rem; padding:1px 3px; border-radius:3px;">جديدة</span>
-                    ${isMain ? '<span class="thumb-main-badge">الرئيسية</span>' : ''}
+                    ${isMain ? '<span class="thumb-main-tag">الرئيسية</span>' : ''}
                     <img src="${tempUrl}" alt="صورة">
-                    <div class="thumb-actions">
-                        ${!isMain ? `<button type="button" class="btn-thumb star" onclick="setEditNewMain(${index})">⭐ رئيسية</button>` : ''}
-                        <button type="button" class="btn-thumb del" onclick="removeEditNewImage(${index})">🗑️ حذف</button>
+                    <div class="thumb-overlay-actions">
+                        ${!isMain ? `<button type="button" class="btn-action-mini" onclick="setEditNewMain(${index})">تعيين رئيسية</button>` : '<span></span>'}
+                        <button type="button" class="btn-action-mini danger" onclick="removeEditNewImage(${index})">حذف</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
 
-            // إخفاء أو إظهار زرار الإضافة
             const total = editExistingUrls.length + editNewFiles.length;
             document.getElementById('editUploadBox').style.display = total >= 10 ? 'none' : 'block';
         }
@@ -735,11 +743,6 @@
 
         function setEditNewMain(index) {
             const picked = editNewFiles.splice(index, 1)[0];
-            // لو خليناها رئيسية نحولها لأول المصفوفة
-            if (editExistingUrls.length > 0) {
-                // نسحبها ونحطها في بداية الصور المرفوعة بعد رفعه لـ كلاوديناري عند الحفظ
-            }
-            editNewFiles.splice(index, 1);
             editNewFiles.unshift(picked);
             renderEditThumbs();
         }
@@ -749,9 +752,7 @@
             renderEditThumbs();
         }
 
-        // ==========================================
-        // 📤 دالة الرفع الفعلية لـ Cloudinary
-        // ==========================================
+        // الرفع لـ Cloudinary
         async function uploadFilesListToCloudinary(filesArray) {
             if (filesArray.length === 0) return [];
             const uploadedUrls = [];
@@ -769,20 +770,18 @@
                     if (data.secure_url) {
                         uploadedUrls.push(data.secure_url);
                     } else {
-                        alert(`❌ خطأ في كلاوديناري بالصورة (${i+1}): ` + (data.error?.message || 'تأكدي من الـ Preset'));
+                        alert(`خطأ في رفع الصورة (${i+1}): ` + (data.error?.message || 'تأكدي من الإعدادات'));
                         return null;
                     }
                 } catch (err) {
-                    alert(`❌ فشل الاتصال بكلاوديناري: ${err.message}`);
+                    alert(`فشل الاتصال بخادم الصور: ${err.message}`);
                     return null;
                 }
             }
             return uploadedUrls;
         }
 
-        // ==========================================
-        // 🔄 التعامل مع n8n والسيرفر
-        // ==========================================
+        // التعامل مع n8n
         async function fetchProperties() {
             try {
                 const response = await fetch(N8N_WEBHOOK_URL, {
@@ -791,13 +790,13 @@
                     body: JSON.stringify({ action: "get" })
                 });
 
-                if (!response.ok) throw new Error('رمز استجابة السيرفر: ' + response.status);
+                if (!response.ok) throw new Error('استجابة غير صالحة من السيرفر: ' + response.status);
 
                 const data = await response.json();
                 allProperties = Array.isArray(data) ? data : (data.data || []);
                 renderPropertiesGrid(allProperties);
             } catch (err) {
-                console.error('خطأ في جلب البيانات:', err);
+                console.error('خطأ في تحميل العقارات:', err);
             }
         }
 
@@ -807,7 +806,7 @@
             grid.innerHTML = '';
 
             if (properties.length === 0) {
-                grid.innerHTML = '<div style="text-align:center; grid-column: 1/-1; padding: 30px; color: #64748b;">لا توجد عقارات حالياً</div>';
+                grid.innerHTML = '<div style="text-align:center; grid-column: 1/-1; padding: 40px; color: #64748b;">لا توجد وحدات مسجلة حالياً</div>';
                 return;
             }
 
@@ -828,15 +827,15 @@
                     <span class="badge-code">${code}</span>
                     <div class="card-image-wrapper">
                         <img src="${mainImage}" class="card-image" alt="صورة العقار" onerror="this.src='https://via.placeholder.com/400x300?text=Error'">
-                        <span class="images-count-badge">📷 ${imagesList.length} صور</span>
+                        <span class="images-count-badge">${imagesList.length} صور</span>
                     </div>
                     <div class="card-content">
                         <h3 class="card-title">${unitType || 'وحدة عقارية'} ${section ? '- ' + section : ''}</h3>
-                        <div class="card-location">📍 ${region || 'غير محدد'}</div>
+                        <div class="card-location">${region || 'غير محدد'}</div>
                         <div class="card-price">${price ? price + ' EGP' : 'السعر عند الطلب'}</div>
                     </div>
                     <div class="card-actions">
-                        <button class="btn btn-primary" onclick="openEditModal('${code}')">📝 تعديل والتفاصيل</button>
+                        <button class="btn btn-secondary" onclick="openEditModal('${code}')">تعديل والتفاصيل</button>
                     </div>
                 `;
 
@@ -844,10 +843,10 @@
             });
         }
 
-        // إرسال عقار جديد
+        // إضافة عقار
         async function submitAddProperty() {
             const saveBtn = document.getElementById('saveAddBtn');
-            saveBtn.innerText = '⏳ جاري رفع الصور...';
+            saveBtn.innerText = 'جاري رفع الصور...';
             saveBtn.disabled = true;
 
             let uploadedUrls = [];
@@ -860,7 +859,7 @@
                 }
             }
 
-            saveBtn.innerText = '⏳ جاري تسجيل العقار في الشيت...';
+            saveBtn.innerText = 'جاري حفظ البيانات...';
 
             const newPropertyPayload = {
                 action: "add",
@@ -885,19 +884,17 @@
                 });
 
                 if (response.ok) {
-                    alert('✅ تم تسجيل العقار الجديد في Google Sheets بنجاح!');
+                    alert('تم حفظ العقار بنجاح');
                     closeAddModal();
-                    
                     document.getElementById('addCode').value = '';
                     addSelectedFiles = [];
                     renderAddThumbs();
-                    
                     fetchProperties();
                 } else {
-                    alert('❌ السيرفر رجّع خطأ أثناء الحفظ (رمز: ' + response.status + ')');
+                    alert('تعذر الحفظ: استجابة السيرفر ' + response.status);
                 }
             } catch (err) {
-                alert('❌ فشل الاتصال بسيرفر n8n: ' + err.message);
+                alert('فشل الاتصال بالسيرفر: ' + err.message);
             } finally {
                 saveBtn.innerText = 'حفظ العقار';
                 saveBtn.disabled = false;
@@ -927,13 +924,12 @@
             document.getElementById('editModal').classList.add('active');
         }
 
-        // حفظ التعديلات
+        // حفظ التعديل
         async function submitUpdate() {
             const saveBtn = document.getElementById('saveModalBtn');
-            saveBtn.innerText = '⏳ جاري رفع الصور الجديدة...';
+            saveBtn.innerText = 'جاري المعالجة...';
             saveBtn.disabled = true;
 
-            // 1. رفع الصور الجديدة لو وُجدت
             let newlyUploadedUrls = [];
             if (editNewFiles.length > 0) {
                 newlyUploadedUrls = await uploadFilesListToCloudinary(editNewFiles);
@@ -944,10 +940,9 @@
                 }
             }
 
-            // 2. دمج الصور القديمة المتبقية مع الجديدة المرفوعة
             const finalImagesList = editExistingUrls.concat(newlyUploadedUrls);
 
-            saveBtn.innerText = '⏳ جاري الحفظ...';
+            saveBtn.innerText = 'جاري التحديث...';
 
             const updatedPayload = {
                 action: "update",
@@ -972,14 +967,14 @@
                 });
 
                 if (response.ok) {
-                    alert('✅ تم حفظ التعديلات وتحديث الصور بنجاح!');
+                    alert('تم حفظ التعديلات بنجاح');
                     closeModal();
                     fetchProperties();
                 } else {
-                    alert('❌ حدث خطأ أثناء التعديل');
+                    alert('تعذر التعديل: استجابة السيرفر ' + response.status);
                 }
             } catch (error) {
-                alert('❌ فشل الاتصال بالسيرفر');
+                alert('فشل الاتصال بالسيرفر');
             } finally {
                 saveBtn.innerText = 'حفظ التعديلات';
                 saveBtn.disabled = false;
