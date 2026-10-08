@@ -318,6 +318,7 @@
 
     let propertiesData = [];
     let currentGalleryImages = [];
+    let currentOldUnitCode = ""; // Track original code for updates
 
     // Fix Cloudinary HEIC -> JPG format
     function fixImageUrl(url) {
@@ -327,7 +328,7 @@
       return clean;
     }
 
-    // 🧠 Smart Normalizer to match keys despite \n, spaces, or hamza differences
+    // Smart Key Normalizer
     function normalizeKey(str) {
       if (!str) return "";
       return String(str)
@@ -356,7 +357,6 @@
       return "";
     }
 
-    // 💰 Price Formatter supporting strings like "6500000 EGP" or numbers
     function formatPrice(val) {
       if (!val || String(val).trim() === "" || String(val).trim() === "-") return "غير محدد";
       const str = String(val).trim();
@@ -365,7 +365,6 @@
       return new Intl.NumberFormat('ar-EG').format(parseInt(digits, 10)) + " ج.م";
     }
 
-    // 🖼️ Parse image links separated by comma or newline
     function parseImageList(rawImages) {
       if (!rawImages) return [];
       return String(rawImages)
@@ -448,12 +447,10 @@
         const location = getVal(item, ["المنطقة", "location"]) || "-";
         const area = getVal(item, ["المساحة", "area"]) || "-";
         
-        // Exact normalized lookup for prices
         const totalPrice = getVal(item, ["السعر الإجمالي", "السعر الاجمالي", "السعر"]);
         const downPayment = getVal(item, ["المقدم", "مقدم"]);
         const status = getVal(item, ["حالة العقار", "status"]) || "متاح";
 
-        // Accurate image counting and Hero selection
         const rawImages = getVal(item, ["رابط الصور", "image_url", "image"]);
         const imgList = parseImageList(rawImages);
         const heroImg = fixImageUrl(imgList[0]);
@@ -501,7 +498,7 @@
       });
     }
 
-    // --- Gallery Renderer with Hero Selector ---
+    // --- Gallery Renderer ---
     function renderGalleryManager() {
       const grid = document.getElementById("modalGalleryGrid");
       grid.innerHTML = "";
@@ -523,7 +520,6 @@
       });
     }
 
-    // 🌟 Set image as Hero (moves to index 0 so it becomes the first link)
     function setHeroImage(index) {
       const selected = currentGalleryImages.splice(index, 1)[0];
       currentGalleryImages.unshift(selected);
@@ -542,11 +538,17 @@
         const res = await fetch(WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "move_top", unit_code: unitCode })
+          body: JSON.stringify({
+            action: "move_top",
+            unit_code: unitCode,
+            old_unit_code: unitCode,
+            "كود الوحدة": unitCode,
+            "كود الوحـدة": unitCode
+          })
         });
         if (res.ok) {
           alert("تم رفع العقار لأعلى القائمة بنجاح! 🚀");
-          fetchProperties();
+          setTimeout(fetchProperties, 800);
         }
       } catch (e) { console.error(e); }
     }
@@ -558,9 +560,15 @@
         const res = await fetch(WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "delete", unit_code: unitCode })
+          body: JSON.stringify({
+            action: "delete",
+            unit_code: unitCode,
+            old_unit_code: unitCode,
+            "كود الوحدة": unitCode,
+            "كود الوحـدة": unitCode
+          })
         });
-        if (res.ok) { alert("تم الحذف بنجاح."); fetchProperties(); }
+        if (res.ok) { alert("تم الحذف بنجاح."); setTimeout(fetchProperties, 800); }
       } catch (e) { console.error(e); }
     }
 
@@ -570,14 +578,16 @@
       document.getElementById("formAction").value = mode;
       currentGalleryImages = [];
 
+      // 🔓 UNLOCKED CODE FIELD IN EDIT MODE
+      document.getElementById("unit_code").disabled = false;
+
       if (mode === "add") {
         document.getElementById("modalTitle").innerText = "إضافة عقار جديد";
-        document.getElementById("unit_code").disabled = false;
+        currentOldUnitCode = "";
       } else if (mode === "edit" && data) {
         document.getElementById("modalTitle").innerText = "تعديل بيانات العقار";
-        const code = getVal(data, ["كود الوحدة", "unit_code"]);
-        document.getElementById("unit_code").value = code;
-        document.getElementById("unit_code").disabled = true;
+        currentOldUnitCode = getVal(data, ["كود الوحدة", "unit_code"]);
+        document.getElementById("unit_code").value = currentOldUnitCode;
 
         document.getElementById("section").value = getVal(data, ["القسم", "section"]) || "سكني";
         document.getElementById("unit_type").value = getVal(data, ["نوع الوحدة", "unit_type"]);
@@ -609,26 +619,68 @@
       if (item) openModal("edit", item);
     }
 
-    // --- Submit Form ---
+    // --- Submit Form (Dual-Language Payload to ensure Google Sheets & n8n mapping) ---
     async function handleFormSubmit(e) {
       e.preventDefault();
       const action = document.getElementById("formAction").value;
+      const newUnitCode = document.getElementById("unit_code").value.trim();
 
+      const sectionVal = document.getElementById("section").value;
+      const typeVal = document.getElementById("unit_type").value;
+      const locVal = document.getElementById("location").value;
+      const areaVal = document.getElementById("area").value;
+      const priceVal = document.getElementById("total_price").value;
+      const downVal = document.getElementById("down_payment").value;
+      const instVal = document.getElementById("installment").value;
+      const roomsVal = document.getElementById("rooms").value;
+      const statusVal = document.getElementById("property_status").value;
+      const descVal = document.getElementById("description").value;
+      const imgStr = currentGalleryImages.join("\n");
+
+      // Comprehensive payload sent with BOTH Arabic and English keys for n8n compatibility
       const payload = {
         action: action,
-        unit_code: document.getElementById("unit_code").value,
-        section: document.getElementById("section").value,
-        unit_type: document.getElementById("unit_type").value,
-        location: document.getElementById("location").value,
-        area: document.getElementById("area").value,
-        total_price: document.getElementById("total_price").value,
-        down_payment: document.getElementById("down_payment").value,
-        installment: document.getElementById("installment").value,
-        rooms: document.getElementById("rooms").value,
-        status: document.getElementById("property_status").value,
-        // Hero image is always at index 0, saved first in the newline-separated string
-        image_url: currentGalleryImages.join("\n"),
-        description: document.getElementById("description").value
+        unit_code: newUnitCode,
+        old_unit_code: currentOldUnitCode || newUnitCode,
+        
+        // Arabic Google Sheet Column Headers
+        "كود الوحدة": newUnitCode,
+        "كود الوحـدة": newUnitCode,
+        "old_unit_code": currentOldUnitCode || newUnitCode,
+        
+        "القسم": sectionVal,
+        "section": sectionVal,
+        
+        "نوع الوحدة": typeVal,
+        "unit_type": typeVal,
+        
+        "المنطقة": locVal,
+        "location": locVal,
+        
+        "المساحة": areaVal,
+        "area": areaVal,
+        
+        "السعر الإجمالي": priceVal,
+        "السعر الاجمالي": priceVal,
+        "total_price": priceVal,
+        
+        "المقدم": downVal,
+        "down_payment": downVal,
+        
+        "نظام التقسيط": instVal,
+        "installment": instVal,
+        
+        "عدد الغرف": roomsVal,
+        "rooms": roomsVal,
+        
+        "حالة العقار": statusVal,
+        "status": statusVal,
+        
+        "رابط الصور": imgStr,
+        "image_url": imgStr,
+        
+        "الوصف التسويقي": descVal,
+        "description": descVal
       };
 
       try {
@@ -639,9 +691,9 @@
         });
 
         if (res.ok) {
-          alert(action === "add" ? "تمت الإضافة بنجاح! 🎉" : "تم التعديل وحفظ الصور بنجاح! ✨");
+          alert(action === "add" ? "تمت الإضافة بنجاح! 🎉" : "تم التعديل وحفظ البيانات والتغييرات في الشيت بنجاح! ✨");
           closeModal();
-          fetchProperties();
+          setTimeout(fetchProperties, 800);
         }
       } catch (err) {
         console.error("Error submitting:", err);
