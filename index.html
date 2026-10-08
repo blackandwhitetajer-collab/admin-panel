@@ -311,7 +311,7 @@
   <script>
     const WEBHOOK_URL = "https://n8n.hellolucidagency.com/webhook/properties";
 
-    // ☁️ Cloudinary Credentials Updated
+    // ☁️ Cloudinary Credentials
     const CLOUD_NAME = "fig3bixy";
     const UPLOAD_PRESET = "properties_preset";
     const FOLDER_NAME = "trust-Estate";
@@ -322,21 +322,41 @@
     // Fix Cloudinary HEIC -> JPG format
     function fixImageUrl(url) {
       if (!url) return 'https://via.placeholder.com/400x250?text=بدون+صورة';
-      let clean = url.trim();
+      let clean = String(url).trim();
       clean = clean.replace(/\.(heic|heif)$/i, '.jpg');
       return clean;
     }
 
-    // Dynamic Sheet Key Reader
-    function getVal(item, keys) {
-      for (let k of keys) {
-        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== "") {
-          return item[k];
+    // 🧠 Smart Normalizer to match keys despite \n, spaces, or hamza differences
+    function normalizeKey(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/[\n\r\t]/g, "")
+        .replace(/ـ/g, "")
+        .replace(/[أإآ]/g, "ا")
+        .replace(/\s+/g, "")
+        .toLowerCase();
+    }
+
+    function getVal(item, targetKeys) {
+      if (!item || typeof item !== "object") return "";
+      const itemKeys = Object.keys(item);
+      
+      for (let target of targetKeys) {
+        const normTarget = normalizeKey(target);
+        for (let k of itemKeys) {
+          if (normalizeKey(k) === normTarget) {
+            const val = item[k];
+            if (val !== undefined && val !== null && String(val).trim() !== "") {
+              return String(val).trim();
+            }
+          }
         }
       }
       return "";
     }
 
+    // 💰 Price Formatter supporting strings like "6500000 EGP" or numbers
     function formatPrice(val) {
       if (!val || String(val).trim() === "" || String(val).trim() === "-") return "غير محدد";
       const str = String(val).trim();
@@ -345,7 +365,16 @@
       return new Intl.NumberFormat('ar-EG').format(parseInt(digits, 10)) + " ج.م";
     }
 
-    // --- ☁️ Direct Cloudinary Upload Function ---
+    // 🖼️ Parse image links separated by comma or newline
+    function parseImageList(rawImages) {
+      if (!rawImages) return [];
+      return String(rawImages)
+        .split(/[\n,]/)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    // --- ☁️ Direct Cloudinary Upload ---
     async function handleDirectUpload(e) {
       const files = e.target.files;
       if (!files || files.length === 0) return;
@@ -357,9 +386,7 @@
         const formData = new FormData();
         formData.append("file", file);
         formData.append("upload_preset", UPLOAD_PRESET);
-        if (FOLDER_NAME) {
-          formData.append("folder", FOLDER_NAME);
-        }
+        if (FOLDER_NAME) formData.append("folder", FOLDER_NAME);
 
         try {
           const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
@@ -373,8 +400,7 @@
             currentGalleryImages.push(uploadedUrl);
             renderGalleryManager();
           } else {
-            console.error("Cloudinary error:", data);
-            alert("تعذر رفع الصورة. تأكدي من أن properties_preset من نوع Unsigned في إعدادات Cloudinary.");
+            alert("تعذر رفع الصورة. تأكدي من إعدادات Cloudinary.");
           }
         } catch (err) {
           console.error("Upload error:", err);
@@ -422,12 +448,14 @@
         const location = getVal(item, ["المنطقة", "location"]) || "-";
         const area = getVal(item, ["المساحة", "area"]) || "-";
         
+        // Exact normalized lookup for prices
         const totalPrice = getVal(item, ["السعر الإجمالي", "السعر الاجمالي", "السعر"]);
         const downPayment = getVal(item, ["المقدم", "مقدم"]);
         const status = getVal(item, ["حالة العقار", "status"]) || "متاح";
 
+        // Accurate image counting and Hero selection
         const rawImages = getVal(item, ["رابط الصور", "image_url", "image"]);
-        const imgList = rawImages ? rawImages.split(/[\n,]/).map(s => s.trim()).filter(Boolean) : [];
+        const imgList = parseImageList(rawImages);
         const heroImg = fixImageUrl(imgList[0]);
 
         let badgeClass = "badge-available";
@@ -473,7 +501,7 @@
       });
     }
 
-    // --- Gallery Renderer ---
+    // --- Gallery Renderer with Hero Selector ---
     function renderGalleryManager() {
       const grid = document.getElementById("modalGalleryGrid");
       grid.innerHTML = "";
@@ -495,6 +523,7 @@
       });
     }
 
+    // 🌟 Set image as Hero (moves to index 0 so it becomes the first link)
     function setHeroImage(index) {
       const selected = currentGalleryImages.splice(index, 1)[0];
       currentGalleryImages.unshift(selected);
@@ -564,9 +593,7 @@
         document.getElementById("description").value = getVal(data, ["الوصف التسويقي", "description"]);
 
         const rawImgs = getVal(data, ["رابط الصور", "image_url"]);
-        if (rawImgs) {
-          currentGalleryImages = rawImgs.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
-        }
+        currentGalleryImages = parseImageList(rawImgs);
       }
 
       renderGalleryManager();
@@ -599,6 +626,7 @@
         installment: document.getElementById("installment").value,
         rooms: document.getElementById("rooms").value,
         status: document.getElementById("property_status").value,
+        // Hero image is always at index 0, saved first in the newline-separated string
         image_url: currentGalleryImages.join("\n"),
         description: document.getElementById("description").value
       };
