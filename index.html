@@ -10,149 +10,169 @@
   
   <style>
     :root {
-      --primary-color: #1e293b;
+      --primary-color: #0f172a;
       --accent-color: #d97706;
-      --bg-color: #f8fafc;
+      --bg-color: #f1f5f9;
       --card-bg: #ffffff;
-      --text-main: #0f172a;
+      --text-main: #1e293b;
       --text-muted: #64748b;
-      --border-color: #e2e8f0;
+      --border-color: #cbd5e1;
       --success-color: #16a34a;
       --danger-color: #dc2626;
-      --gray-color: #475569;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); padding: 15px; }
-    .container { max-width: 1250px; margin: 0 auto; }
+    .container { max-width: 1200px; margin: 0 auto; }
 
     /* Header */
     .header {
       display: flex; justify-content: space-between; align-items: center;
-      background: var(--card-bg); padding: 18px 20px; border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+      background: var(--card-bg); padding: 20px; border-radius: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
     }
     .header h1 { font-size: 20px; color: var(--primary-color); display: flex; align-items: center; gap: 10px; }
     .header h1 i { color: var(--accent-color); }
     
     /* Buttons */
     .btn {
-      padding: 10px 16px; border: none; border-radius: 8px; font-weight: 600;
+      padding: 10px 18px; border: none; border-radius: 10px; font-weight: 700;
       cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;
       font-size: 14px;
     }
     .btn-primary { background-color: var(--accent-color); color: #fff; }
     .btn-primary:hover { background-color: #b45309; }
     .btn-sm { padding: 6px 12px; font-size: 13px; }
-    .btn-action { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-action { background: #f8fafc; color: var(--text-main); border: 1px solid var(--border-color); }
     .btn-action:hover { background: #e2e8f0; }
-    .btn-top { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-    .btn-top:hover { background: #bae6fd; }
-    .btn-danger { background: #fee2e2; color: var(--danger-color); border: 1px solid #fecaca; }
-    .btn-danger:hover { background: #fca5a5; }
+    .btn-top { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .btn-top:hover { background: #dbeafe; }
+    .btn-danger { background: #fef2f2; color: var(--danger-color); border: 1px solid #fecaca; }
+    .btn-danger:hover { background: #fee2e2; }
 
     /* Search Bar */
     .controls-bar { margin-bottom: 20px; }
     .search-box { position: relative; width: 100%; }
     .search-box input {
-      width: 100%; padding: 12px 40px 12px 15px; border-radius: 8px;
+      width: 100%; padding: 14px 45px 14px 15px; border-radius: 12px;
       border: 1px solid var(--border-color); font-size: 14px; outline: none; background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     }
-    .search-box i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-box i { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
-    /* Table & Cards Layout */
-    .table-responsive {
-      background: var(--card-bg); border-radius: 12px; overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border-color);
+    /* Cards Grid */
+    .properties-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+    
+    .prop-card {
+      background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color);
+      overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    table { width: 100%; border-collapse: collapse; text-align: right; font-size: 14px; }
-    th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; padding: 14px; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
-    td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-    tr:hover { background-color: #f8fafc; }
+    .prop-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
 
-    /* Property Thumbnail Image */
-    .prop-thumb {
-      width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
-      border: 1px solid var(--border-color); background-color: #f1f5f9;
+    .card-hero {
+      height: 180px; width: 100%; position: relative; background: #e2e8f0;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
     }
-    .prop-code-cell { display: flex; align-items: center; gap: 10px; }
-
-    /* Status Badges */
-    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; white-space: nowrap; }
-    .badge-available { background: #dcfce7; color: var(--success-color); }
-    .badge-sold { background: #fee2e2; color: var(--danger-color); }
-    .badge-hidden { background: #f1f5f9; color: var(--gray-color); }
-
-    /* ---📱📱 MOBILE RESPONSIVE CARDS VIEW 📱📱--- */
-    @media (max-width: 768px) {
-      .table-responsive { background: transparent; border: none; box-shadow: none; overflow: visible; }
-      table, thead, tbody, th, td, tr { display: block; }
-      thead { display: none; } /* Hide heavy headers on mobile */
-
-      tr {
-        background: var(--card-bg); border: 1px solid var(--border-color);
-        border-radius: 14px; margin-bottom: 15px; padding: 16px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-      }
-
-      td {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 8px 0; border-bottom: 1px dashed #f1f5f9; font-size: 14px;
-      }
-      td:last-child { border-bottom: none; margin-top: 10px; padding-top: 10px; }
-
-      /* Insert column labels dynamically on mobile */
-      td::before {
-        content: attr(data-label);
-        font-weight: 700; color: var(--text-muted); font-size: 13px;
-      }
-
-      .prop-code-cell { width: 100%; justify-content: space-between; }
-      .mobile-actions { width: 100%; display: flex; gap: 8px; justify-content: flex-end; }
-      .mobile-actions .btn { flex: 1; justify-content: center; }
+    .card-hero img { width: 100%; height: 100%; object-fit: cover; }
+    .badge-status {
+      position: absolute; top: 12px; right: 12px; padding: 6px 12px;
+      border-radius: 20px; font-size: 12px; font-weight: 700; backdrop-filter: blur(8px);
     }
+    .badge-available { background: rgba(22, 163, 74, 0.9); color: #fff; }
+    .badge-sold { background: rgba(220, 38, 38, 0.9); color: #fff; }
+    .badge-hidden { background: rgba(71, 85, 105, 0.9); color: #fff; }
 
-    /* Modals */
+    .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .card-code { font-size: 16px; font-weight: 800; color: var(--primary-color); }
+    .card-type-loc { font-size: 13px; color: var(--text-muted); display: flex; gap: 8px; align-items: center; }
+
+    .card-details-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+      background: #f8fafc; padding: 12px; border-radius: 10px; margin-top: 5px; font-size: 13px;
+    }
+    .detail-item span { display: block; color: var(--text-muted); font-size: 11px; font-weight: 600; }
+    .detail-item strong { color: var(--primary-color); font-size: 13px; }
+
+    .card-actions {
+      padding: 12px 16px; border-top: 1px solid var(--border-color);
+      display: flex; gap: 8px; justify-content: space-between; background: #fafafa;
+    }
+    .card-actions .btn { flex: 1; justify-content: center; }
+
+    /* Modal Styling */
     .modal {
-      display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65);
+      display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7);
       z-index: 1000; align-items: center; justify-content: center; padding: 15px; backdrop-filter: blur(4px);
     }
     .modal-content {
-      background: var(--card-bg); width: 100%; max-width: 720px; border-radius: 16px;
-      padding: 25px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+      background: var(--card-bg); width: 100%; max-width: 750px; border-radius: 20px;
+      padding: 25px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 30px -5px rgba(0,0,0,0.15);
     }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .modal-header h2 { font-size: 18px; color: var(--primary-color); }
-    .close-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); }
+    .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
 
-    /* Form Layout */
     .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full-width { grid-column: span 2; }
-    .form-group label { font-size: 13px; font-weight: 600; color: var(--text-main); }
+    .form-group label { font-size: 13px; font-weight: 700; color: var(--text-main); }
     .form-group input, .form-group select, .form-group textarea {
-      padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none;
+      padding: 11px 14px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 14px; outline: none;
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       border-color: var(--accent-color);
     }
 
-    /* Image Preview Box inside Modal */
-    .image-preview-wrapper {
-      margin-top: 8px; padding: 10px; border: 1px dashed var(--border-color);
-      border-radius: 8px; text-align: center; background: #f8fafc;
+    /* ☁️ Cloudinary Upload Box ☁️ */
+    .gallery-manager {
+      border: 2px dashed var(--border-color); border-radius: 12px; padding: 18px;
+      background: #f8fafc; text-align: center; margin-top: 5px; position: relative;
     }
-    .image-preview-wrapper img {
-      max-width: 100%; max-height: 160px; border-radius: 6px; object-fit: cover; display: none;
+    .upload-box {
+      cursor: pointer; padding: 15px; border-radius: 10px; background: #fff;
+      border: 1px solid var(--border-color); transition: all 0.2s ease;
     }
-    .image-preview-placeholder { font-size: 12px; color: var(--text-muted); }
+    .upload-box:hover { border-color: var(--accent-color); background: #fffbeb; }
+    .upload-box i { font-size: 32px; color: var(--accent-color); margin-bottom: 8px; }
+    .upload-box p { font-size: 14px; font-weight: 700; color: var(--primary-color); }
+    .upload-box span { font-size: 12px; color: var(--text-muted); display: block; margin-top: 4px; }
+
+    #uploadSpinner {
+      display: none; margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--accent-color);
+    }
+
+    .gallery-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px; margin-top: 15px;
+    }
+    .gallery-item {
+      position: relative; height: 90px; border-radius: 10px; overflow: hidden;
+      border: 2px solid transparent; background: #e2e8f0;
+    }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-item.is-hero { border-color: var(--accent-color); box-shadow: 0 0 0 2px var(--accent-color); }
+    .hero-badge-tag {
+      position: absolute; top: 4px; right: 4px; background: var(--accent-color);
+      color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 700;
+    }
+    .gallery-item-actions {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+      display: flex; gap: 6px; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .gallery-item:hover .gallery-item-actions { opacity: 1; }
+    .gallery-btn {
+      width: 28px; height: 28px; border-radius: 50%; border: none;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px;
+    }
+    .btn-make-hero { background: #fff; color: var(--accent-color); }
+    .btn-del-img { background: var(--danger-color); color: #fff; }
 
     @media (max-width: 600px) {
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full-width { grid-column: span 1; }
     }
-
-    .empty-state { text-align: center; padding: 30px; color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -160,7 +180,7 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <h1><i class="fa-solid fa-city"></i> لوحة إدارة عقارات Trust Estate</h1>
+      <h1><i class="fa-solid fa-building-circle-check"></i> لوحة إدارة عقارات Trust Estate</h1>
       <button class="btn btn-primary" onclick="openModal('add')">
         <i class="fa-solid fa-plus"></i> إضافة عقار جديد
       </button>
@@ -170,31 +190,15 @@
     <div class="controls-bar">
       <div class="search-box">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="ابحث برقم الكود، المنطقة، أو نوع العقار...">
+        <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="ابحث برقم الكود، المنطقة، أو نوع العقار...">
       </div>
     </div>
 
-    <!-- Table / Responsive Cards -->
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>كود الوحدة</th>
-            <th>النوع</th>
-            <th>المنطقة</th>
-            <th>المساحة</th>
-            <th>السعر الإجمالي</th>
-            <th>المقدم</th>
-            <th>الحالة</th>
-            <th>الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody id="propertiesTableBody">
-          <tr>
-            <td colspan="8" class="empty-state">جاري جلب بيانات العقارات...</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Properties Grid -->
+    <div class="properties-grid" id="propertiesContainer">
+      <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+        جاري جلب بيانات العقارات...
+      </div>
     </div>
   </div>
 
@@ -227,7 +231,7 @@
 
           <div class="form-group">
             <label>نوع الوحدة *</label>
-            <input type="text" id="unit_type" required placeholder="شقة للبيع، فيلا، محل...">
+            <input type="text" id="unit_type" required placeholder="شقة للبيع، فيلا...">
           </div>
 
           <div class="form-group">
@@ -242,12 +246,12 @@
 
           <div class="form-group">
             <label>السعر الإجمالي (ج.م) *</label>
-            <input type="text" id="total_price" required oninput="formatPriceInput(this)" placeholder="مثال: 2,500,000">
+            <input type="text" id="total_price" required placeholder="مثال: 2,500,000">
           </div>
 
           <div class="form-group">
             <label>المقدم (ج.م)</label>
-            <input type="text" id="down_payment" oninput="formatPriceInput(this)" placeholder="مثال: كاش أو 250,000">
+            <input type="text" id="down_payment" placeholder="كاش أو 250,000">
           </div>
 
           <div class="form-group">
@@ -256,8 +260,8 @@
           </div>
 
           <div class="form-group">
-            <label>عدد الغرف</label>
-            <input type="text" id="rooms" placeholder="3">
+            <label>عدد الغرف / التقسيم</label>
+            <input type="text" id="rooms" placeholder="غرفتين + 2 حمام">
           </div>
 
           <div class="form-group">
@@ -269,14 +273,24 @@
             </select>
           </div>
 
-          <!-- Image URL & Live Preview -->
+          <!-- ☁️ Cloudinary Direct Image Uploader ☁️ -->
           <div class="form-group full-width">
-            <label>رابط الصورة الرئيسية *</label>
-            <input type="url" id="image_url" oninput="previewModalImage(this.value)" placeholder="https://res.cloudinary.com/...">
-            
-            <div class="image-preview-wrapper">
-              <span id="previewPlaceholder" class="image-preview-placeholder">ادخلي رابط الصورة لمشاهدة المعاينة هنا</span>
-              <img id="modalImgPreview" src="" alt="معاينة الصورة الرئيسية">
+            <label>ألبوم الصور والصورة الرئيسية (الهيرو)</label>
+            <div class="gallery-manager">
+              
+              <input type="file" id="cloudinaryFileInput" accept="image/*" multiple style="display: none;" onchange="handleDirectUpload(event)">
+              
+              <div class="upload-box" onclick="document.getElementById('cloudinaryFileInput').click()">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p>اضغطي هنا للرفع المباشر من الموبايل أو الاستوديو</p>
+                <span>سيتم الرفع مباشرة إلى مجلد trust-Estate على Cloudinary</span>
+              </div>
+
+              <div id="uploadSpinner">
+                <i class="fa-solid fa-spinner fa-spin"></i> جاري رفع الصور إلى Cloudinary...
+              </div>
+
+              <div class="gallery-grid" id="modalGalleryGrid"></div>
             </div>
           </div>
 
@@ -288,19 +302,32 @@
 
         <div style="margin-top: 20px; text-align: left; display: flex; gap: 10px; justify-content: flex-end;">
           <button type="button" class="btn btn-action" onclick="closeModal()">إلغاء</button>
-          <button type="submit" class="btn btn-primary" id="saveBtn">حفظ البيانات</button>
+          <button type="submit" class="btn btn-primary">حفظ البيانات</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    // 🔗 رابط Webhook الخاص بكِ
     const WEBHOOK_URL = "https://n8n.hellolucidagency.com/webhook/properties";
 
-    let propertiesData = [];
+    // ☁️ Cloudinary Credentials Updated
+    const CLOUD_NAME = "fig3bixy";
+    const UPLOAD_PRESET = "properties_preset";
+    const FOLDER_NAME = "trust-Estate";
 
-    // --- Helper to handle key name variations from Sheet ---
+    let propertiesData = [];
+    let currentGalleryImages = [];
+
+    // Fix Cloudinary HEIC -> JPG format
+    function fixImageUrl(url) {
+      if (!url) return 'https://via.placeholder.com/400x250?text=بدون+صورة';
+      let clean = url.trim();
+      clean = clean.replace(/\.(heic|heif)$/i, '.jpg');
+      return clean;
+    }
+
+    // Dynamic Sheet Key Reader
     function getVal(item, keys) {
       for (let k of keys) {
         if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== "") {
@@ -310,51 +337,58 @@
       return "";
     }
 
-    // --- Price Formatter Fix ---
-    function formatPrice(value) {
-      if (!value || String(value).trim() === "") return "-";
-      const strVal = String(value).trim();
-      const cleanNum = strVal.replace(/[^\d]/g, "");
-      
-      // If it's pure text like "كاش"
-      if (!cleanNum) return strVal;
-      
-      const num = parseInt(cleanNum, 10);
-      if (isNaN(num)) return strVal;
-      
-      return new Intl.NumberFormat('ar-EG').format(num) + " ج.م";
+    function formatPrice(val) {
+      if (!val || String(val).trim() === "" || String(val).trim() === "-") return "غير محدد";
+      const str = String(val).trim();
+      const digits = str.replace(/[^\d]/g, "");
+      if (!digits) return str;
+      return new Intl.NumberFormat('ar-EG').format(parseInt(digits, 10)) + " ج.م";
     }
 
-    function formatPriceInput(input) {
-      let raw = input.value.replace(/[^\d]/g, "");
-      if (raw) {
-        input.value = new Intl.NumberFormat('en-US').format(parseInt(raw, 10));
-      } else {
-        // Keep text if entered manually
+    // --- ☁️ Direct Cloudinary Upload Function ---
+    async function handleDirectUpload(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      const spinner = document.getElementById("uploadSpinner");
+      spinner.style.display = "block";
+
+      for (let file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", UPLOAD_PRESET);
+        if (FOLDER_NAME) {
+          formData.append("folder", FOLDER_NAME);
+        }
+
+        try {
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+            method: "POST",
+            body: formData
+          });
+
+          const data = await res.json();
+          if (data.secure_url) {
+            const uploadedUrl = fixImageUrl(data.secure_url);
+            currentGalleryImages.push(uploadedUrl);
+            renderGalleryManager();
+          } else {
+            console.error("Cloudinary error:", data);
+            alert("تعذر رفع الصورة. تأكدي من أن properties_preset من نوع Unsigned في إعدادات Cloudinary.");
+          }
+        } catch (err) {
+          console.error("Upload error:", err);
+          alert("خطأ أثناء الاتصال بـ Cloudinary.");
+        }
       }
+
+      spinner.style.display = "none";
+      e.target.value = "";
     }
 
-    // --- Image Preview Handler inside Modal ---
-    function previewModalImage(url) {
-      const img = document.getElementById("modalImgPreview");
-      const placeholder = document.getElementById("previewPlaceholder");
-      if (url && url.trim().startsWith("http")) {
-        img.src = url.trim();
-        img.style.display = "inline-block";
-        placeholder.style.display = "none";
-      } else {
-        img.src = "";
-        img.style.display = "none";
-        placeholder.style.display = "inline-block";
-      }
-    }
+    // --- Fetch Properties ---
+    document.addEventListener("DOMContentLoaded", fetchProperties);
 
-    // --- Initialize ---
-    document.addEventListener("DOMContentLoaded", () => {
-      fetchProperties();
-    });
-
-    // --- Fetch Data ---
     async function fetchProperties() {
       try {
         const response = await fetch(WEBHOOK_URL, {
@@ -364,127 +398,156 @@
         });
         const data = await response.json();
         propertiesData = Array.isArray(data) ? data : (data.data || []);
-        renderTable(propertiesData);
+        renderCards(propertiesData);
       } catch (err) {
-        console.error("Error fetching data:", err);
-        document.getElementById("propertiesTableBody").innerHTML = `
-          <tr><td colspan="8" class="empty-state">تعذر جلب البيانات. تحققي من شبكة النت ورابط Webhook.</td></tr>`;
+        console.error("Error:", err);
+        document.getElementById("propertiesContainer").innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; color: var(--danger-color);">تعذر جلب البيانات. تحققي من الخادم.</div>`;
       }
     }
 
-    // --- Render Table & Responsive Cards ---
-    function renderTable(data) {
-      const tbody = document.getElementById("propertiesTableBody");
-      tbody.innerHTML = "";
+    // --- Render Cards ---
+    function renderCards(data) {
+      const container = document.getElementById("propertiesContainer");
+      container.innerHTML = "";
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">لا توجد عقارات مسجلة حالياً.</td></tr>`;
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px;">لا توجد عقارات مسجلة حالياً.</div>`;
         return;
       }
 
       data.forEach(item => {
         const unitCode = getVal(item, ["كود الوحدة", "unit_code", "code"]) || "-";
-        const unitType = getVal(item, ["نوع الوحدة", "unit_type", "type"]) || "-";
+        const unitType = getVal(item, ["نوع الوحدة", "unit_type"]) || "عقار";
         const location = getVal(item, ["المنطقة", "location"]) || "-";
         const area = getVal(item, ["المساحة", "area"]) || "-";
         
-        // Flexibly fetch price regardless of Hamza
-        const totalPrice = getVal(item, ["السعر الإجمالي", "السعر الاجمالي", "السعر", "total_price"]);
-        const downPayment = getVal(item, ["المقدم", "مقدم", "down_payment"]);
-        
+        const totalPrice = getVal(item, ["السعر الإجمالي", "السعر الاجمالي", "السعر"]);
+        const downPayment = getVal(item, ["المقدم", "مقدم"]);
         const status = getVal(item, ["حالة العقار", "status"]) || "متاح";
-        const imageUrl = getVal(item, ["رابط الصور", "image_url", "image"]) || "https://via.placeholder.com/100?text=عقار";
+
+        const rawImages = getVal(item, ["رابط الصور", "image_url", "image"]);
+        const imgList = rawImages ? rawImages.split(/[\n,]/).map(s => s.trim()).filter(Boolean) : [];
+        const heroImg = fixImageUrl(imgList[0]);
 
         let badgeClass = "badge-available";
         if (status === "تم البيع") badgeClass = "badge-sold";
         if (status === "مخفي") badgeClass = "badge-hidden";
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td data-label="كود الوحدة">
-            <div class="prop-code-cell">
-              <img src="${imageUrl}" class="prop-thumb" onerror="this.src='https://via.placeholder.com/100?text=عقار'">
-              <strong>${unitCode}</strong>
+        const card = document.createElement("div");
+        card.className = "prop-card";
+        card.innerHTML = `
+          <div class="card-hero">
+            <img src="${heroImg}" onerror="this.src='https://via.placeholder.com/400x250?text=خطأ+في+الصورة'">
+            <span class="badge-status ${badgeClass}">${status}</span>
+          </div>
+
+          <div class="card-body">
+            <div class="card-code">${unitCode}</div>
+            <div class="card-type-loc">
+              <span><i class="fa-solid fa-house-tag"></i> ${unitType}</span> • 
+              <span><i class="fa-solid fa-location-dot"></i> ${location}</span>
             </div>
-          </td>
-          <td data-label="النوع">${unitType}</td>
-          <td data-label="المنطقة">${location}</td>
-          <td data-label="المساحة">${area} م²</td>
-          <td data-label="السعر الإجمالي"><strong>${formatPrice(totalPrice)}</strong></td>
-          <td data-label="المقدم">${formatPrice(downPayment)}</td>
-          <td data-label="الحالة"><span class="badge ${badgeClass}">${status}</span></td>
-          <td data-label="الإجراءات">
-            <div class="mobile-actions">
-              <button class="btn btn-sm btn-top" title="رفع للأعلى" onclick="moveToTop('${unitCode}')">
-                <i class="fa-solid fa-arrow-up"></i> رفع
-              </button>
-              <button class="btn btn-sm btn-action" title="تعديل" onclick="editProperty('${unitCode}')">
-                <i class="fa-solid fa-pen"></i> تعديل
-              </button>
-              <button class="btn btn-sm btn-danger" title="حذف" onclick="deleteProperty('${unitCode}')">
-                <i class="fa-solid fa-trash"></i>
-              </button>
+
+            <div class="card-details-grid">
+              <div class="detail-item"><span>المساحة:</span> <strong>${area} م²</strong></div>
+              <div class="detail-item"><span>السعر الإجمالي:</span> <strong>${formatPrice(totalPrice)}</strong></div>
+              <div class="detail-item"><span>المقدم:</span> <strong>${formatPrice(downPayment)}</strong></div>
+              <div class="detail-item"><span>الصور:</span> <strong>${imgList.length} صور</strong></div>
             </div>
-          </td>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn btn-sm btn-top" onclick="moveToTop('${unitCode}')">
+              <i class="fa-solid fa-arrow-up"></i> رفع
+            </button>
+            <button class="btn btn-sm btn-action" onclick="editProperty('${unitCode}')">
+              <i class="fa-solid fa-pen"></i> تعديل
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteProperty('${unitCode}')">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(card);
       });
+    }
+
+    // --- Gallery Renderer ---
+    function renderGalleryManager() {
+      const grid = document.getElementById("modalGalleryGrid");
+      grid.innerHTML = "";
+
+      currentGalleryImages.forEach((url, index) => {
+        const item = document.createElement("div");
+        item.className = `gallery-item ${index === 0 ? 'is-hero' : ''}`;
+        
+        const fixedUrl = fixImageUrl(url);
+        item.innerHTML = `
+          <img src="${fixedUrl}">
+          ${index === 0 ? '<span class="hero-badge-tag">رئيسية (Hero)</span>' : ''}
+          <div class="gallery-item-actions">
+            ${index !== 0 ? `<button type="button" class="gallery-btn btn-make-hero" title="اجعلها رئيسية" onclick="setHeroImage(${index})"><i class="fa-solid fa-star"></i></button>` : ''}
+            <button type="button" class="gallery-btn btn-del-img" title="حذف" onclick="removeImage(${index})"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        `;
+        grid.appendChild(item);
+      });
+    }
+
+    function setHeroImage(index) {
+      const selected = currentGalleryImages.splice(index, 1)[0];
+      currentGalleryImages.unshift(selected);
+      renderGalleryManager();
+    }
+
+    function removeImage(index) {
+      currentGalleryImages.splice(index, 1);
+      renderGalleryManager();
     }
 
     // --- Move To Top ---
     async function moveToTop(unitCode) {
-      if (!confirm(`هل تريد رفع العقار (${unitCode}) لأعلى القائمة؟`)) return;
-
+      if (!confirm(`رفع العقار كود (${unitCode}) لأعلى القائمة؟`)) return;
       try {
-        const response = await fetch(WEBHOOK_URL, {
+        const res = await fetch(WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "move_top", unit_code: unitCode })
         });
-
-        if (response.ok) {
+        if (res.ok) {
           alert("تم رفع العقار لأعلى القائمة بنجاح! 🚀");
           fetchProperties();
         }
-      } catch (err) {
-        console.error("Error moving to top:", err);
-      }
+      } catch (e) { console.error(e); }
     }
 
     // --- Delete Property ---
     async function deleteProperty(unitCode) {
-      if (!confirm(`هل أنت متأكد من حذف العقار كود (${unitCode})؟`)) return;
-
+      if (!confirm(`حذف العقار كود (${unitCode}) نهائياً؟`)) return;
       try {
-        const response = await fetch(WEBHOOK_URL, {
+        const res = await fetch(WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "delete", unit_code: unitCode })
         });
-
-        if (response.ok) {
-          alert("تم حذف العقار.");
-          fetchProperties();
-        }
-      } catch (err) {
-        console.error("Error deleting:", err);
-      }
+        if (res.ok) { alert("تم الحذف بنجاح."); fetchProperties(); }
+      } catch (e) { console.error(e); }
     }
 
-    // --- Open Modal (Add / Edit) ---
+    // --- Modal Handlers ---
     function openModal(mode, data = null) {
       document.getElementById("propertyForm").reset();
       document.getElementById("formAction").value = mode;
+      currentGalleryImages = [];
 
       if (mode === "add") {
         document.getElementById("modalTitle").innerText = "إضافة عقار جديد";
         document.getElementById("unit_code").disabled = false;
-        previewModalImage("");
       } else if (mode === "edit" && data) {
         document.getElementById("modalTitle").innerText = "تعديل بيانات العقار";
-        
-        const unitCode = getVal(data, ["كود الوحدة", "unit_code"]);
-        document.getElementById("unit_code").value = unitCode;
+        const code = getVal(data, ["كود الوحدة", "unit_code"]);
+        document.getElementById("unit_code").value = code;
         document.getElementById("unit_code").disabled = true;
 
         document.getElementById("section").value = getVal(data, ["القسم", "section"]) || "سكني";
@@ -498,14 +561,15 @@
         document.getElementById("installment").value = getVal(data, ["نظام التقسيط", "installment"]);
         document.getElementById("rooms").value = getVal(data, ["عدد الغرف", "rooms"]);
         document.getElementById("property_status").value = getVal(data, ["حالة العقار", "status"]) || "متاح";
-        
-        const imgUrl = getVal(data, ["رابط الصور", "image_url"]);
-        document.getElementById("image_url").value = imgUrl;
-        previewModalImage(imgUrl); // 👈 تشغيل المعاينة الفورية للصورة
-
         document.getElementById("description").value = getVal(data, ["الوصف التسويقي", "description"]);
+
+        const rawImgs = getVal(data, ["رابط الصور", "image_url"]);
+        if (rawImgs) {
+          currentGalleryImages = rawImgs.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+        }
       }
 
+      renderGalleryManager();
       document.getElementById("propertyModal").style.display = "flex";
     }
 
@@ -518,7 +582,7 @@
       if (item) openModal("edit", item);
     }
 
-    // --- Form Submit ---
+    // --- Submit Form ---
     async function handleFormSubmit(e) {
       e.preventDefault();
       const action = document.getElementById("formAction").value;
@@ -530,36 +594,34 @@
         unit_type: document.getElementById("unit_type").value,
         location: document.getElementById("location").value,
         area: document.getElementById("area").value,
-        total_price: document.getElementById("total_price").value.replace(/[^\d]/g, ""),
+        total_price: document.getElementById("total_price").value,
         down_payment: document.getElementById("down_payment").value,
         installment: document.getElementById("installment").value,
         rooms: document.getElementById("rooms").value,
         status: document.getElementById("property_status").value,
-        image_url: document.getElementById("image_url").value,
+        image_url: currentGalleryImages.join("\n"),
         description: document.getElementById("description").value
       };
 
       try {
-        const response = await fetch(WEBHOOK_URL, {
+        const res = await fetch(WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
-        if (response.ok) {
-          alert(action === "add" ? "تمت إضافة العقار بنجاح! 🎉" : "تم تعديل البيانات والصورة بنجاح! ✨");
+        if (res.ok) {
+          alert(action === "add" ? "تمت الإضافة بنجاح! 🎉" : "تم التعديل وحفظ الصور بنجاح! ✨");
           closeModal();
           fetchProperties();
-        } else {
-          alert("حدث خطأ في الحفظ.");
         }
       } catch (err) {
-        console.error("Error submitting form:", err);
+        console.error("Error submitting:", err);
       }
     }
 
-    // --- Filter ---
-    function filterTable() {
+    // --- Filter Cards ---
+    function filterCards() {
       const query = document.getElementById("searchInput").value.toLowerCase();
       const filtered = propertiesData.filter(item => {
         const code = getVal(item, ["كود الوحدة", "unit_code"]).toLowerCase();
@@ -567,7 +629,7 @@
         const type = getVal(item, ["نوع الوحدة", "unit_type"]).toLowerCase();
         return code.includes(query) || loc.includes(query) || type.includes(query);
       });
-      renderTable(filtered);
+      renderCards(filtered);
     }
   </script>
 </body>
