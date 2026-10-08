@@ -23,22 +23,23 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 15px; }
     .container { max-width: 1250px; margin: 0 auto; }
 
     /* Header */
     .header {
       display: flex; justify-content: space-between; align-items: center;
-      background: var(--card-bg); padding: 20px 25px; border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px;
+      background: var(--card-bg); padding: 18px 20px; border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
     }
-    .header h1 { font-size: 22px; color: var(--primary-color); display: flex; align-items: center; gap: 10px; }
+    .header h1 { font-size: 20px; color: var(--primary-color); display: flex; align-items: center; gap: 10px; }
     .header h1 i { color: var(--accent-color); }
     
-    /* Buttons & Inputs */
+    /* Buttons */
     .btn {
-      padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600;
+      padding: 10px 16px; border: none; border-radius: 8px; font-weight: 600;
       cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;
+      font-size: 14px;
     }
     .btn-primary { background-color: var(--accent-color); color: #fff; }
     .btn-primary:hover { background-color: #b45309; }
@@ -50,61 +51,108 @@
     .btn-danger { background: #fee2e2; color: var(--danger-color); border: 1px solid #fecaca; }
     .btn-danger:hover { background: #fca5a5; }
 
-    /* Controls Bar */
-    .controls-bar {
-      display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: space-between;
-    }
-    .search-box {
-      flex: 1; min-width: 250px; position: relative;
-    }
+    /* Search Bar */
+    .controls-bar { margin-bottom: 20px; }
+    .search-box { position: relative; width: 100%; }
     .search-box input {
       width: 100%; padding: 12px 40px 12px 15px; border-radius: 8px;
-      border: 1px solid var(--border-color); font-size: 14px; outline: none;
+      border: 1px solid var(--border-color); font-size: 14px; outline: none; background: #fff;
     }
     .search-box i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
-    /* Table */
+    /* Table & Cards Layout */
     .table-responsive {
-      background: var(--card-bg); border-radius: 12px; overflow-x: auto;
+      background: var(--card-bg); border-radius: 12px; overflow: hidden;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border-color);
     }
     table { width: 100%; border-collapse: collapse; text-align: right; font-size: 14px; }
-    th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; padding: 16px; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
-    td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; padding: 14px; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
     tr:hover { background-color: #f8fafc; }
 
+    /* Property Thumbnail Image */
+    .prop-thumb {
+      width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
+      border: 1px solid var(--border-color); background-color: #f1f5f9;
+    }
+    .prop-code-cell { display: flex; align-items: center; gap: 10px; }
+
     /* Status Badges */
-    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; }
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; white-space: nowrap; }
     .badge-available { background: #dcfce7; color: var(--success-color); }
     .badge-sold { background: #fee2e2; color: var(--danger-color); }
     .badge-hidden { background: #f1f5f9; color: var(--gray-color); }
 
+    /* ---📱📱 MOBILE RESPONSIVE CARDS VIEW 📱📱--- */
+    @media (max-width: 768px) {
+      .table-responsive { background: transparent; border: none; box-shadow: none; overflow: visible; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; } /* Hide heavy headers on mobile */
+
+      tr {
+        background: var(--card-bg); border: 1px solid var(--border-color);
+        border-radius: 14px; margin-bottom: 15px; padding: 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      }
+
+      td {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px 0; border-bottom: 1px dashed #f1f5f9; font-size: 14px;
+      }
+      td:last-child { border-bottom: none; margin-top: 10px; padding-top: 10px; }
+
+      /* Insert column labels dynamically on mobile */
+      td::before {
+        content: attr(data-label);
+        font-weight: 700; color: var(--text-muted); font-size: 13px;
+      }
+
+      .prop-code-cell { width: 100%; justify-content: space-between; }
+      .mobile-actions { width: 100%; display: flex; gap: 8px; justify-content: flex-end; }
+      .mobile-actions .btn { flex: 1; justify-content: center; }
+    }
+
     /* Modals */
     .modal {
-      display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
-      z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);
+      display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65);
+      z-index: 1000; align-items: center; justify-content: center; padding: 15px; backdrop-filter: blur(4px);
     }
     .modal-content {
-      background: var(--card-bg); width: 100%; max-width: 750px; border-radius: 16px;
-      padding: 30px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+      background: var(--card-bg); width: 100%; max-width: 720px; border-radius: 16px;
+      padding: 25px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
     }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
     .modal-header h2 { font-size: 18px; color: var(--primary-color); }
-    .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+    .close-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); }
 
-    /* Form Grid */
-    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    /* Form Layout */
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full-width { grid-column: span 2; }
     .form-group label { font-size: 13px; font-weight: 600; color: var(--text-main); }
     .form-group input, .form-group select, .form-group textarea {
-      padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none;
+      padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none;
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       border-color: var(--accent-color);
     }
 
-    .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+    /* Image Preview Box inside Modal */
+    .image-preview-wrapper {
+      margin-top: 8px; padding: 10px; border: 1px dashed var(--border-color);
+      border-radius: 8px; text-align: center; background: #f8fafc;
+    }
+    .image-preview-wrapper img {
+      max-width: 100%; max-height: 160px; border-radius: 6px; object-fit: cover; display: none;
+    }
+    .image-preview-placeholder { font-size: 12px; color: var(--text-muted); }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full-width { grid-column: span 1; }
+    }
+
+    .empty-state { text-align: center; padding: 30px; color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -118,15 +166,15 @@
       </button>
     </div>
 
-    <!-- Controls Bar -->
+    <!-- Search Controls -->
     <div class="controls-bar">
       <div class="search-box">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="ابحث برقم الكود، المنطقة، أو النوع...">
+        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="ابحث برقم الكود، المنطقة، أو نوع العقار...">
       </div>
     </div>
 
-    <!-- Table -->
+    <!-- Table / Responsive Cards -->
     <div class="table-responsive">
       <table>
         <thead>
@@ -143,7 +191,7 @@
         </thead>
         <tbody id="propertiesTableBody">
           <tr>
-            <td colspan="8" class="empty-state">جاري تحميل البيانات...</td>
+            <td colspan="8" class="empty-state">جاري جلب بيانات العقارات...</td>
           </tr>
         </tbody>
       </table>
@@ -164,7 +212,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label>كود الوحدة *</label>
-            <input type="text" id="unit_code" required placeholder="مثال: TR-101">
+            <input type="text" id="unit_code" required placeholder="مثال: TE_101">
           </div>
 
           <div class="form-group">
@@ -179,17 +227,17 @@
 
           <div class="form-group">
             <label>نوع الوحدة *</label>
-            <input type="text" id="unit_type" required placeholder="مثال: شقة للبيع، فيلا، محل...">
+            <input type="text" id="unit_type" required placeholder="شقة للبيع، فيلا، محل...">
           </div>
 
           <div class="form-group">
             <label>المنطقة / الموقع *</label>
-            <input type="text" id="location" required placeholder="مثال: حدائق أكتوبر، الشيخ زايد...">
+            <input type="text" id="location" required placeholder="حي الأشجار، الشيخ زايد...">
           </div>
 
           <div class="form-group">
             <label>المساحة (م²) *</label>
-            <input type="number" id="area" required placeholder="150">
+            <input type="text" id="area" required placeholder="135">
           </div>
 
           <div class="form-group">
@@ -199,17 +247,17 @@
 
           <div class="form-group">
             <label>المقدم (ج.م)</label>
-            <input type="text" id="down_payment" oninput="formatPriceInput(this)" placeholder="مثال: 250,000">
+            <input type="text" id="down_payment" oninput="formatPriceInput(this)" placeholder="مثال: كاش أو 250,000">
           </div>
 
           <div class="form-group">
             <label>نظام التقسيط</label>
-            <input type="text" id="installment" placeholder="مثال: على 5 سنوات">
+            <input type="text" id="installment" placeholder="على 5 سنوات">
           </div>
 
           <div class="form-group">
             <label>عدد الغرف</label>
-            <input type="number" id="rooms" placeholder="3">
+            <input type="text" id="rooms" placeholder="3">
           </div>
 
           <div class="form-group">
@@ -217,13 +265,19 @@
             <select id="property_status" required>
               <option value="متاح" selected>متاح 🟢</option>
               <option value="تم البيع">تم البيع 🔴</option>
-              <option value="مخفي">مخفي 👁️‍وق</option>
+              <option value="مخفي">مخفي 👁️‍🗨️</option>
             </select>
           </div>
 
+          <!-- Image URL & Live Preview -->
           <div class="form-group full-width">
-            <label>رابط الصور</label>
-            <input type="url" id="image_url" placeholder="https://res.cloudinary.com/...">
+            <label>رابط الصورة الرئيسية *</label>
+            <input type="url" id="image_url" oninput="previewModalImage(this.value)" placeholder="https://res.cloudinary.com/...">
+            
+            <div class="image-preview-wrapper">
+              <span id="previewPlaceholder" class="image-preview-placeholder">ادخلي رابط الصورة لمشاهدة المعاينة هنا</span>
+              <img id="modalImgPreview" src="" alt="معاينة الصورة الرئيسية">
+            </div>
           </div>
 
           <div class="form-group full-width">
@@ -232,7 +286,7 @@
           </div>
         </div>
 
-        <div style="margin-top: 25px; text-align: left;">
+        <div style="margin-top: 20px; text-align: left; display: flex; gap: 10px; justify-content: flex-end;">
           <button type="button" class="btn btn-action" onclick="closeModal()">إلغاء</button>
           <button type="submit" class="btn btn-primary" id="saveBtn">حفظ البيانات</button>
         </div>
@@ -241,23 +295,34 @@
   </div>
 
   <script>
-    // 🔗 رابط n8n Webhook الخاص بكِ
+    // 🔗 رابط Webhook الخاص بكِ
     const WEBHOOK_URL = "https://n8n.hellolucidagency.com/webhook/properties";
 
     let propertiesData = [];
 
-    // --- Price Helper Functions (منع خربطة الأسعار) ---
-    function formatPrice(value) {
-      if (!value && value !== 0) return "0";
-      const cleanNum = String(value).replace(/[^\d.]/g, "");
-      const num = parseFloat(cleanNum);
-      if (isNaN(num)) return value;
-      return new Intl.NumberFormat('ar-EG').format(num) + " ج.م";
+    // --- Helper to handle key name variations from Sheet ---
+    function getVal(item, keys) {
+      for (let k of keys) {
+        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== "") {
+          return item[k];
+        }
+      }
+      return "";
     }
 
-    function parseRawPrice(value) {
-      if (!value) return "";
-      return String(value).replace(/[^\d]/g, "");
+    // --- Price Formatter Fix ---
+    function formatPrice(value) {
+      if (!value || String(value).trim() === "") return "-";
+      const strVal = String(value).trim();
+      const cleanNum = strVal.replace(/[^\d]/g, "");
+      
+      // If it's pure text like "كاش"
+      if (!cleanNum) return strVal;
+      
+      const num = parseInt(cleanNum, 10);
+      if (isNaN(num)) return strVal;
+      
+      return new Intl.NumberFormat('ar-EG').format(num) + " ج.م";
     }
 
     function formatPriceInput(input) {
@@ -265,7 +330,22 @@
       if (raw) {
         input.value = new Intl.NumberFormat('en-US').format(parseInt(raw, 10));
       } else {
-        input.value = "";
+        // Keep text if entered manually
+      }
+    }
+
+    // --- Image Preview Handler inside Modal ---
+    function previewModalImage(url) {
+      const img = document.getElementById("modalImgPreview");
+      const placeholder = document.getElementById("previewPlaceholder");
+      if (url && url.trim().startsWith("http")) {
+        img.src = url.trim();
+        img.style.display = "inline-block";
+        placeholder.style.display = "none";
+      } else {
+        img.src = "";
+        img.style.display = "none";
+        placeholder.style.display = "inline-block";
       }
     }
 
@@ -274,7 +354,7 @@
       fetchProperties();
     });
 
-    // --- Fetch Properties (GET) ---
+    // --- Fetch Data ---
     async function fetchProperties() {
       try {
         const response = await fetch(WEBHOOK_URL, {
@@ -288,11 +368,11 @@
       } catch (err) {
         console.error("Error fetching data:", err);
         document.getElementById("propertiesTableBody").innerHTML = `
-          <tr><td colspan="8" class="empty-state">تعذر جلب البيانات. يرجى التحقق من اتصال الشبكة وسيناريو n8n.</td></tr>`;
+          <tr><td colspan="8" class="empty-state">تعذر جلب البيانات. تحققي من شبكة النت ورابط Webhook.</td></tr>`;
       }
     }
 
-    // --- Render Table ---
+    // --- Render Table & Responsive Cards ---
     function renderTable(data) {
       const tbody = document.getElementById("propertiesTableBody");
       tbody.innerHTML = "";
@@ -303,29 +383,45 @@
       }
 
       data.forEach(item => {
-        const status = item["حالة العقار"] || item["status"] || "متاح";
+        const unitCode = getVal(item, ["كود الوحدة", "unit_code", "code"]) || "-";
+        const unitType = getVal(item, ["نوع الوحدة", "unit_type", "type"]) || "-";
+        const location = getVal(item, ["المنطقة", "location"]) || "-";
+        const area = getVal(item, ["المساحة", "area"]) || "-";
+        
+        // Flexibly fetch price regardless of Hamza
+        const totalPrice = getVal(item, ["السعر الإجمالي", "السعر الاجمالي", "السعر", "total_price"]);
+        const downPayment = getVal(item, ["المقدم", "مقدم", "down_payment"]);
+        
+        const status = getVal(item, ["حالة العقار", "status"]) || "متاح";
+        const imageUrl = getVal(item, ["رابط الصور", "image_url", "image"]) || "https://via.placeholder.com/100?text=عقار";
+
         let badgeClass = "badge-available";
         if (status === "تم البيع") badgeClass = "badge-sold";
         if (status === "مخفي") badgeClass = "badge-hidden";
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td><strong>${item["كود الوحدة"] || "-"}</strong></td>
-          <td>${item["نوع الوحدة"] || "-"}</td>
-          <td>${item["المنطقة"] || "-"}</td>
-          <td>${item["المساحة"] || "-"} م²</td>
-          <td>${formatPrice(item["السعر الإجمالي"])}</td>
-          <td>${formatPrice(item["المقدم"])}</td>
-          <td><span class="badge ${badgeClass}">${status}</span></td>
-          <td>
-            <div style="display: flex; gap: 6px;">
-              <button class="btn btn-sm btn-top" title="رفع للأعلى" onclick="moveToTop('${item["كود الوحدة"]}')">
+          <td data-label="كود الوحدة">
+            <div class="prop-code-cell">
+              <img src="${imageUrl}" class="prop-thumb" onerror="this.src='https://via.placeholder.com/100?text=عقار'">
+              <strong>${unitCode}</strong>
+            </div>
+          </td>
+          <td data-label="النوع">${unitType}</td>
+          <td data-label="المنطقة">${location}</td>
+          <td data-label="المساحة">${area} م²</td>
+          <td data-label="السعر الإجمالي"><strong>${formatPrice(totalPrice)}</strong></td>
+          <td data-label="المقدم">${formatPrice(downPayment)}</td>
+          <td data-label="الحالة"><span class="badge ${badgeClass}">${status}</span></td>
+          <td data-label="الإجراءات">
+            <div class="mobile-actions">
+              <button class="btn btn-sm btn-top" title="رفع للأعلى" onclick="moveToTop('${unitCode}')">
                 <i class="fa-solid fa-arrow-up"></i> رفع
               </button>
-              <button class="btn btn-sm btn-action" title="تعديل" onclick="editProperty('${item["كود الوحدة"]}')">
-                <i class="fa-solid fa-pen"></i>
+              <button class="btn btn-sm btn-action" title="تعديل" onclick="editProperty('${unitCode}')">
+                <i class="fa-solid fa-pen"></i> تعديل
               </button>
-              <button class="btn btn-sm btn-danger" title="حذف" onclick="deleteProperty('${item["كود الوحدة"]}')">
+              <button class="btn btn-sm btn-danger" title="حذف" onclick="deleteProperty('${unitCode}')">
                 <i class="fa-solid fa-trash"></i>
               </button>
             </div>
@@ -335,33 +431,27 @@
       });
     }
 
-    // --- Move To Top (رفع للأعلى) ---
+    // --- Move To Top ---
     async function moveToTop(unitCode) {
-      if (!confirm(`هل تريد رفع العقار كود (${unitCode}) لأعلى القائمة؟`)) return;
+      if (!confirm(`هل تريد رفع العقار (${unitCode}) لأعلى القائمة؟`)) return;
 
       try {
         const response = await fetch(WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "move_top",
-            unit_code: unitCode
-          })
+          body: JSON.stringify({ action: "move_top", unit_code: unitCode })
         });
 
         if (response.ok) {
-          alert("تم رفع العقار بنجاح! 🚀");
+          alert("تم رفع العقار لأعلى القائمة بنجاح! 🚀");
           fetchProperties();
-        } else {
-          alert("حدث خطأ أثناء الرفع.");
         }
       } catch (err) {
         console.error("Error moving to top:", err);
-        alert("فشل الاتصال بالخادم.");
       }
     }
 
-    // --- Delete Property (حذف) ---
+    // --- Delete Property ---
     async function deleteProperty(unitCode) {
       if (!confirm(`هل أنت متأكد من حذف العقار كود (${unitCode})؟`)) return;
 
@@ -369,14 +459,11 @@
         const response = await fetch(WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "delete",
-            unit_code: unitCode
-          })
+          body: JSON.stringify({ action: "delete", unit_code: unitCode })
         });
 
         if (response.ok) {
-          alert("تم حذف العقار بنجاح.");
+          alert("تم حذف العقار.");
           fetchProperties();
         }
       } catch (err) {
@@ -384,7 +471,7 @@
       }
     }
 
-    // --- Open / Close Modal ---
+    // --- Open Modal (Add / Edit) ---
     function openModal(mode, data = null) {
       document.getElementById("propertyForm").reset();
       document.getElementById("formAction").value = mode;
@@ -392,26 +479,31 @@
       if (mode === "add") {
         document.getElementById("modalTitle").innerText = "إضافة عقار جديد";
         document.getElementById("unit_code").disabled = false;
+        previewModalImage("");
       } else if (mode === "edit" && data) {
         document.getElementById("modalTitle").innerText = "تعديل بيانات العقار";
-        document.getElementById("unit_code").value = data["كود الوحدة"] || "";
-        document.getElementById("unit_code").disabled = true; // منع تغيير الكود في التعديل
-        document.getElementById("section").value = data["القسم"] || "سكني";
-        document.getElementById("unit_type").value = data["نوع الوحدة"] || "";
-        document.getElementById("location").value = data["المنطقة"] || "";
-        document.getElementById("area").value = data["المساحة"] || "";
         
-        // ضبط السعر بدون رموز لتسهيل التعديل
-        document.getElementById("total_price").value = parseRawPrice(data["السعر الإجمالي"]);
-        document.getElementById("down_payment").value = parseRawPrice(data["المقدم"]);
-        formatPriceInput(document.getElementById("total_price"));
-        formatPriceInput(document.getElementById("down_payment"));
+        const unitCode = getVal(data, ["كود الوحدة", "unit_code"]);
+        document.getElementById("unit_code").value = unitCode;
+        document.getElementById("unit_code").disabled = true;
 
-        document.getElementById("installment").value = data["نظام التقسيط"] || "";
-        document.getElementById("rooms").value = data["عدد الغرف"] || "";
-        document.getElementById("property_status").value = data["حالة العقار"] || "متاح";
-        document.getElementById("image_url").value = data["رابط الصور"] || "";
-        document.getElementById("description").value = data["الوصف التسويقي"] || "";
+        document.getElementById("section").value = getVal(data, ["القسم", "section"]) || "سكني";
+        document.getElementById("unit_type").value = getVal(data, ["نوع الوحدة", "unit_type"]);
+        document.getElementById("location").value = getVal(data, ["المنطقة", "location"]);
+        document.getElementById("area").value = getVal(data, ["المساحة", "area"]);
+        
+        document.getElementById("total_price").value = getVal(data, ["السعر الإجمالي", "السعر الاجمالي", "السعر"]);
+        document.getElementById("down_payment").value = getVal(data, ["المقدم", "مقدم"]);
+
+        document.getElementById("installment").value = getVal(data, ["نظام التقسيط", "installment"]);
+        document.getElementById("rooms").value = getVal(data, ["عدد الغرف", "rooms"]);
+        document.getElementById("property_status").value = getVal(data, ["حالة العقار", "status"]) || "متاح";
+        
+        const imgUrl = getVal(data, ["رابط الصور", "image_url"]);
+        document.getElementById("image_url").value = imgUrl;
+        previewModalImage(imgUrl); // 👈 تشغيل المعاينة الفورية للصورة
+
+        document.getElementById("description").value = getVal(data, ["الوصف التسويقي", "description"]);
       }
 
       document.getElementById("propertyModal").style.display = "flex";
@@ -422,15 +514,15 @@
     }
 
     function editProperty(unitCode) {
-      const item = propertiesData.find(p => p["كود الوحدة"] === unitCode);
+      const item = propertiesData.find(p => getVal(p, ["كود الوحدة", "unit_code"]) === unitCode);
       if (item) openModal("edit", item);
     }
 
-    // --- Form Submit (Add / Update) ---
+    // --- Form Submit ---
     async function handleFormSubmit(e) {
       e.preventDefault();
+      const action = document.getElementById("formAction").value;
 
-      const action = document.getElementById("formAction").value; // add or update
       const payload = {
         action: action,
         unit_code: document.getElementById("unit_code").value,
@@ -438,8 +530,8 @@
         unit_type: document.getElementById("unit_type").value,
         location: document.getElementById("location").value,
         area: document.getElementById("area").value,
-        total_price: parseRawPrice(document.getElementById("total_price").value),
-        down_payment: parseRawPrice(document.getElementById("down_payment").value),
+        total_price: document.getElementById("total_price").value.replace(/[^\d]/g, ""),
+        down_payment: document.getElementById("down_payment").value,
         installment: document.getElementById("installment").value,
         rooms: document.getElementById("rooms").value,
         status: document.getElementById("property_status").value,
@@ -455,28 +547,25 @@
         });
 
         if (response.ok) {
-          alert(action === "add" ? "تمت إضافة العقار بنجاح! 🎉" : "تم تعديل البيانات بنجاح! ✨");
+          alert(action === "add" ? "تمت إضافة العقار بنجاح! 🎉" : "تم تعديل البيانات والصورة بنجاح! ✨");
           closeModal();
           fetchProperties();
         } else {
-          alert("حدث خطأ في حفظ البيانات.");
+          alert("حدث خطأ في الحفظ.");
         }
       } catch (err) {
         console.error("Error submitting form:", err);
-        alert("فشل الاتصال بالخادم.");
       }
     }
 
-    // --- Search / Filter ---
+    // --- Filter ---
     function filterTable() {
       const query = document.getElementById("searchInput").value.toLowerCase();
       const filtered = propertiesData.filter(item => {
-        return (
-          (item["كود الوحدة"] && item["كود الوحدة"].toLowerCase().includes(query)) ||
-          (item["المنطقة"] && item["المنطقة"].toLowerCase().includes(query)) ||
-          (item["نوع الوحدة"] && item["نوع الوحدة"].toLowerCase().includes(query)) ||
-          (item["حالة العقار"] && item["حالة العقار"].toLowerCase().includes(query))
-        );
+        const code = getVal(item, ["كود الوحدة", "unit_code"]).toLowerCase();
+        const loc = getVal(item, ["المنطقة", "location"]).toLowerCase();
+        const type = getVal(item, ["نوع الوحدة", "unit_type"]).toLowerCase();
+        return code.includes(query) || loc.includes(query) || type.includes(query);
       });
       renderTable(filtered);
     }
