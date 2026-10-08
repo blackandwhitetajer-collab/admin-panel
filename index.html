@@ -130,7 +130,7 @@ const CONFIG = {
 const SECTIONS = ["سكني","تجاري","إداري","ساحلي","أرض","فيلا","بيع","إيجار"];
 const STATUSES = ["متاح","تم البيع","مخفي"];
 
-‎/* خريطة الحقول: المفتاح الإنجليزي + البدائل العربية والإنجليزية */
+/* خريطة الحقول: المفتاح الإنجليزي + البدائل العربية والإنجليزية */
 const FIELDS = {
   unit_code:   { ar: "كود الوحدة",       alt: ["unit_code","old_unit_code","كود الوحدة","كود الوحـدة"] },
   section:     { ar: "القسم",            alt: ["section","القسم"] },
@@ -179,7 +179,7 @@ function splitImages(s){
   return String(s || "").split(/\r?\n|,(?=\s*https?:)/).map(x => fixImg(x)).filter(Boolean);
 }
 
-‎/* تنسيق السعر: استخراج الأرقام حتى لو كانت القيمة نصاً غير مهيكل */
+/* تنسيق السعر: استخراج الأرقام حتى لو كانت القيمة نصاً غير مهيكل */
 function fmtPrice(v){
   if (v === undefined || v === null || String(v).trim() === "") return "السعر عند الطلب";
   const ar = "٠١٢٣٤٥٦٧٨٩";
@@ -201,37 +201,65 @@ function toast(msg, err){
 }
 
 async function api(payload){
-  const res = await fetch(CONFIG.WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  if (!res.ok) throw new Error("خطأ في الاتصال بالخادم (" + res.status + ")");
-  const txt = await res.text();
-  if (!txt) return null;
-  try { return JSON.parse(txt); } catch(e){ return txt; }
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 25000);
+  try {
+    const res = await fetch(CONFIG.WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    const txt = await res.text();
+    if (!res.ok) throw new Error("الخادم رد بخطأ " + res.status + (txt ? ": " + txt.slice(0, 200) : ""));
+    if (!txt.trim()) return null;
+    try { return JSON.parse(txt); } catch(e){ return txt; }
+  } catch(e){
+    if (e.name === "AbortError") throw new Error("انتهت مهلة الاتصال (25 ثانية) ولم يرد n8n. تأكد أن الـ Workflow مفعّل وأن نود Respond to Webhook موجود.");
+    if (e instanceof TypeError) throw new Error("تعذر الوصول إلى الـ Webhook (غالباً CORS أو الرابط غير صحيح): " + e.message);
+    throw e;
+  } finally { clearTimeout(timer); }
 }
 
+const WRAP_KEYS = ["data","properties","rows","items","result","results","records","body"];
+
+/* استخراج الأجسام الداخلية من أي شكل: [{json:{..}}] أو {data:[..]} أو {properties:[..]} أو كائن مفرد */
 function extractRows(d){
-  if (Array.isArray(d)) return d.map(x => (x && x.json) ? x.json : x).filter(x => x && typeof x === "object");
-  if (d && typeof d === "object"){
-    for (const k of ["data","rows","properties","items","result"]) if (Array.isArray(d[k])) return extractRows(d[k]);
-    return [d];
+  if (typeof d === "string"){ try { d = JSON.parse(d); } catch(e){ return []; } }
+  if (d === null || d === undefined) return [];
+  if (Array.isArray(d)) return d.flatMap(extractRows);
+  if (typeof d !== "object") return [];
+  if (d.json !== undefined && typeof d.json === "object") return extractRows(d.json);
+  for (const k of WRAP_KEYS){
+    if (d[k] !== undefined && d[k] !== null && typeof d[k] === "object") return extractRows(d[k]);
+    if (typeof d[k] === "string" && /^\s*[\[{]/.test(d[k])) return extractRows(d[k]);
   }
-  return [];
+  return [d];
 }
 
-async function load(){
+async function fetchUnits(){
+  const data = await api({ action: "get" });
+  console.log(data);
+  const raw = extractRows(data);
+  console.log("rows extracted:", raw.length, raw);
+  return Array.from(raw).map(normalize).filter(r => r.unit_code || r.unit_type || r.location || r.total_price);
+}
+
+async function loadUnits(){
   $("list").innerHTML = '<div class="ld">جارٍ تحميل الوحدات...</div>';
   try {
-    const d = await api({ action: "get" });
-    rows = extractRows(d).map(normalize).filter(r => r.unit_code || r.unit_type || r.location);
+    rows = await fetchUnits();
     render();
   } catch(e){
-    $("list").innerHTML = '<div class="empty">تعذر تحميل البيانات. تأكد من الاتصال ثم اضغط تحديث.</div>';
-    toast(e.message, true);
+    console.error(e);
+    $("stats").textContent = "";
+    $("list").innerHTML = '<div class="empty" style="color:var(--bad)"><p><b>تعذر تحميل الوحدات</b></p><p dir="auto" style="margin:8px 0">' +
+      esc(e && e.message ? e.message : e) + '</p><button class="btn" id="btnRetry" type="button">إعادة المحاولة</button></div>';
+    $("btnRetry").onclick = loadUnits;
+    toast("فشل التحميل", true);
   }
 }
+const load = loadUnits;
 
 function render(){
   const q = $("q").value.trim().toLowerCase();
@@ -279,7 +307,7 @@ function codePayload(action, code){
   return { action, unit_code: code, old_unit_code: code, "كود الوحدة": code };
 }
 
-‎/* ---------- المودال ---------- */
+/* ---------- المودال ---------- */
 function fillSelect(el, arr){ el.innerHTML = arr.map(v => '<option value="' + esc(v) + '">' + esc(v) + '</option>').join(""); }
 
 function openModal(code){
@@ -362,7 +390,7 @@ async function save(){
   $("btnSave").disabled = !!uploading;
 }
 
-‎/* ---------- الأحداث ---------- */
+/* ---------- الأحداث ---------- */
 $("btnAdd").onclick = () => openModal();
 $("btnRefresh").onclick = load;
 $("btnCancel").onclick = closeModal;
