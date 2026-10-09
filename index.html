@@ -143,8 +143,18 @@ const FIELDS = {
   rooms:       { ar: "عدد الغرف",        alt: ["rooms","عدد الغرف"] },
   description: { ar: "الوصف التسويقي",   alt: ["description","الوصف التسويقي"] },
   status:      { ar: "حالة العقار",      alt: ["status","حالة العقار","الحالة"] },
-  image_url:   { ar: "رابط الصور",       alt: ["image_url","رابط الصور"] }
+  image_url:   { ar: "رابط الصور",       alt: ["image_url","رابط الصور"] },
+  last_updated:{ ar: "آخر تحديث",        alt: ["last_updated","آخر تحديث","اخر تحديث"] }
 };
+
+/* تحويل قيمة آخر تحديث (رقم ms أو نص تاريخ) إلى رقم للمقارنة */
+function ts(v){
+  if (v === undefined || v === null || String(v).trim() === "") return 0;
+  const s = String(v).trim().replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+  if (/^\d+(\.\d+)?$/.test(s)) return Number(s);
+  const t = Date.parse(s);
+  return isNaN(t) ? 0 : t;
+}
 
 const $ = id => document.getElementById(id);
 let rows = [];
@@ -242,7 +252,9 @@ async function fetchUnits(){
   console.log(data);
   const raw = extractRows(data);
   console.log("rows extracted:", raw.length, raw);
-  return Array.from(raw).map(normalize).filter(r => r.unit_code || r.unit_type || r.location || r.total_price);
+  const list = Array.from(raw).map(normalize).filter(r => r.unit_code || r.unit_type || r.location || r.total_price);
+  /* ترتيب تنازلي بآخر تحديث (الأحدث أولاً) مع ثبات الترتيب الأصلي عند التساوي */
+  return list.map((r, i) => ({ r, i })).sort((a, b) => (ts(b.r.last_updated) - ts(a.r.last_updated)) || (a.i - b.i)).map(x => x.r);
 }
 
 async function loadUnits(){
@@ -296,6 +308,10 @@ function fullPayload(action, o, oldCode){
     p[FIELDS[k].ar] = o[k] ?? "";
   }
   p.price = o.total_price ?? "";
+  p["total_price"] = o.total_price ?? "";
+  p["السعر الإجمالي"] = o.total_price ?? "";
+  p["last_updated"] = o.last_updated ?? "";
+  p["آخر تحديث"] = o.last_updated ?? "";
   p["كود الوحـدة"] = o.unit_code ?? "";
   p["نوع الوحـدة"] = o.unit_type ?? "";
   p["السعر الاجمالي"] = o.total_price ?? "";
@@ -315,7 +331,7 @@ function openModal(code){
   const r = code ? rows.find(x => x.unit_code === code) : null;
   $("mTitle").textContent = r ? "تعديل الوحدة " + r.unit_code : "إضافة وحدة جديدة";
   for (const k in FIELDS){
-    if (k === "image_url") continue;
+    if (k === "image_url" || k === "last_updated") continue;
     $(k).value = r ? r[k] : "";
   }
   if (r){
@@ -376,10 +392,15 @@ async function handleFiles(files){
 
 async function save(){
   const o = {};
-  for (const k in FIELDS){ if (k !== "image_url") o[k] = $(k).value.trim(); }
+  for (const k in FIELDS){ if (k !== "image_url" && k !== "last_updated") o[k] = $(k).value.trim(); }
   if (!o.unit_code){ toast("أدخل كود الوحدة", true); $("unit_code").focus(); return; }
   if (!editing && rows.some(r => r.unit_code === o.unit_code)){ toast("كود الوحدة مستخدم من قبل", true); return; }
   o.image_url = album.join("\n");
+  const old = editing ? rows.find(x => x.unit_code === editing) : null;
+  /* تثبيت السعر: قراءة قيمة الحقل الحالية، وعند تركه فارغاً أثناء التعديل يُحتفظ بالسعر القديم */
+  o.total_price = $("total_price").value.trim() || (old ? old.total_price : "");
+  /* آخر تحديث: وقت الآن للإضافة، وعند التعديل يُحفظ القيمة الحالية */
+  o.last_updated = editing ? (old ? old.last_updated : "") : Date.now();
   $("btnSave").disabled = true;
   try {
     await api(editing ? fullPayload("update", o, editing) : fullPayload("add", o));
@@ -422,7 +443,7 @@ $("list").addEventListener("click", async e => {
     catch(err){ toast(err.message, true); }
   }
   if (a === "top"){
-    try { await api(codePayload("move_top", code)); toast("تم رفع الوحدة للأعلى"); await load(); }
+    try { const now = Date.now(); await api({ action: "move_top", "كود الوحدة": code, unit_code: code, old_unit_code: code, last_updated: now, "آخر تحديث": now }); toast("تم رفع الوحدة للأعلى"); await load(); }
     catch(err){ toast(err.message, true); }
   }
 });
