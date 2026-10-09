@@ -317,7 +317,7 @@ function fullPayload(action, o, oldCode){
     p[clean(FIELDS[k].ar)] = v;
   }
   if (oldCode !== undefined) p.old_unit_code = clean(oldCode);
-  if (action === "add"){
+  if (action === "add" || action === "move_top"){
     p.last_updated = o.last_updated;
     p["آخر تحديث"] = o.last_updated;
   }
@@ -454,8 +454,15 @@ $("list").addEventListener("click", async e => {
     catch(err){ toast(err.message, true); }
   }
   if (a === "top"){
-    try { const now = Date.now(); await api({ action: "move_top", unit_code: clean(code), old_unit_code: clean(code), "كود الوحدة": clean(code), last_updated: now, "آخر تحديث": now }); toast("تم رفع الوحدة للأعلى"); await load(); }
-    catch(err){ toast(err.message, true); }
+    const r = rows.find(x => x.unit_code === code);
+    if (!r){ toast("تعذر العثور على بيانات الوحدة، حدّث القائمة", true); return; }
+    try {
+      /* إرسال جميع بيانات العقار الحالية مع last_updated حتى لا تصل أي خانة undefined */
+      const payload = fullPayload("move_top", Object.assign({}, r, { last_updated: Date.now() }), code);
+      console.log("move_top payload:", payload);
+      await api(payload);
+      toast("تم رفع الوحدة للأعلى"); await load();
+    } catch(err){ toast(err.message, true); }
   }
 });
 
