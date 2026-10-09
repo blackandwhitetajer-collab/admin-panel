@@ -301,26 +301,32 @@ function render(){
   }).join("") + '</div>';
 }
 
+/* تنظيف النصوص: إزالة الرموز الخفية (zero-width / RTL marks / BOM) وتحويل NBSP لمسافة عادية */
+const HIDDEN = /[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g;
+function clean(v){ return String(v ?? "").replace(HIDDEN, "").replace(/\u00A0/g, " ").trim(); }
+function cleanImgs(v){ return String(v ?? "").split(/\r?\n/).map(clean).filter(Boolean).join("\n"); }
+
+const BASE_KEYS = ["unit_code","section","unit_type","location","area","total_price","down_payment","installment","rooms","description","status","image_url"];
+
+/* Payload للإضافة/التعديل: أسماء أعمدة دقيقة، وكل القيم نصوص (لا undefined) */
 function fullPayload(action, o, oldCode){
   const p = { action };
-  for (const k in FIELDS){
-    p[k] = o[k] ?? "";
-    p[FIELDS[k].ar] = o[k] ?? "";
+  for (const k of BASE_KEYS){
+    const v = k === "image_url" ? cleanImgs(o[k]) : clean(o[k]);
+    p[k] = v;
+    p[clean(FIELDS[k].ar)] = v;
   }
-  p.price = o.total_price ?? "";
-  p["total_price"] = o.total_price ?? "";
-  p["السعر الإجمالي"] = o.total_price ?? "";
-  p["last_updated"] = o.last_updated ?? "";
-  p["آخر تحديث"] = o.last_updated ?? "";
-  p["كود الوحـدة"] = o.unit_code ?? "";
-  p["نوع الوحـدة"] = o.unit_type ?? "";
-  p["السعر الاجمالي"] = o.total_price ?? "";
-  if (oldCode !== undefined) p.old_unit_code = oldCode;
+  if (oldCode !== undefined) p.old_unit_code = clean(oldCode);
+  if (action === "add"){
+    p.last_updated = o.last_updated;
+    p["آخر تحديث"] = o.last_updated;
+  }
   return p;
 }
 
 function codePayload(action, code){
-  return { action, unit_code: code, old_unit_code: code, "كود الوحدة": code };
+  const c = clean(code);
+  return { action, unit_code: c, old_unit_code: c, "كود الوحدة": c };
 }
 
 /* ---------- المودال ---------- */
@@ -397,10 +403,15 @@ async function save(){
   if (!editing && rows.some(r => r.unit_code === o.unit_code)){ toast("كود الوحدة مستخدم من قبل", true); return; }
   o.image_url = album.join("\n");
   const old = editing ? rows.find(x => x.unit_code === editing) : null;
-  /* تثبيت السعر: قراءة قيمة الحقل الحالية، وعند تركه فارغاً أثناء التعديل يُحتفظ بالسعر القديم */
-  o.total_price = $("total_price").value.trim() || (old ? old.total_price : "");
-  /* آخر تحديث: وقت الآن للإضافة، وعند التعديل يُحفظ القيمة الحالية */
-  o.last_updated = editing ? (old ? old.last_updated : "") : Date.now();
+  if (old){
+    /* عند التعديل: أي حقل ترك فارغاً يحتفظ بقيمته الحالية في الشيت (الصور تعكس الألبوم كما هو) */
+    for (const k of BASE_KEYS){
+      if (k === "image_url" || k === "unit_code") continue;
+      if (clean(o[k]) === "" && clean(old[k]) !== "") o[k] = old[k];
+    }
+  } else {
+    o.last_updated = Date.now();
+  }
   $("btnSave").disabled = true;
   try {
     await api(editing ? fullPayload("update", o, editing) : fullPayload("add", o));
@@ -443,7 +454,7 @@ $("list").addEventListener("click", async e => {
     catch(err){ toast(err.message, true); }
   }
   if (a === "top"){
-    try { const now = Date.now(); await api({ action: "move_top", "كود الوحدة": code, unit_code: code, old_unit_code: code, last_updated: now, "آخر تحديث": now }); toast("تم رفع الوحدة للأعلى"); await load(); }
+    try { const now = Date.now(); await api({ action: "move_top", unit_code: clean(code), old_unit_code: clean(code), "كود الوحدة": clean(code), last_updated: now, "آخر تحديث": now }); toast("تم رفع الوحدة للأعلى"); await load(); }
     catch(err){ toast(err.message, true); }
   }
 });
