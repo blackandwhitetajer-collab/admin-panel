@@ -270,12 +270,24 @@ function extractRows(d){
   return [d];
 }
 
-async function fetchUnits(){
-  const data = await api({ action: CONFIG.LIST_ACTION });
-  console.log(data);
+async function fetchOnce(action){
+  const data = await api({ action });
+  console.log("list response (" + action + "):", data);
   const raw = extractRows(data);
-  console.log("rows extracted:", raw.length, raw);
   const list = Array.from(raw).map(normalize).filter(r => r.unit_code || r.unit_type || r.location || r.total_price);
+  console.log("rows extracted (" + action + "):", list.length);
+  return list;
+}
+
+async function fetchUnits(){
+  /* المحاولة الأولى بـ properties، وإن فشلت أو رجعت فارغة نجرب get (القديم) */
+  const actions = [CONFIG.LIST_ACTION, "get"].filter((a, i, arr) => a && arr.indexOf(a) === i);
+  let list = [], lastErr = null;
+  for (const act of actions){
+    try { list = await fetchOnce(act); if (list.length) break; }
+    catch(e){ lastErr = e; console.warn("list action failed:", act, e); }
+  }
+  if (!list.length && lastErr) throw lastErr;
   /* ترتيب تنازلي بآخر تحديث (الأحدث أولاً) مع ثبات الترتيب الأصلي عند التساوي */
   return list.map((r, i) => ({ r, i })).sort((a, b) => (ts(b.r.last_updated) - ts(a.r.last_updated)) || (a.i - b.i)).map(x => x.r);
 }
