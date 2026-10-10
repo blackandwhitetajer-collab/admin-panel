@@ -270,24 +270,21 @@ function extractRows(d){
   return [d];
 }
 
-async function fetchOnce(action){
-  const data = await api({ action });
-  console.log("list response (" + action + "):", data);
-  const raw = extractRows(data);
-  const list = Array.from(raw).map(normalize).filter(r => r.unit_code || r.unit_type || r.location || r.total_price);
-  console.log("rows extracted (" + action + "):", list.length);
-  return list;
-}
-
 async function fetchUnits(){
-  /* المحاولة الأولى بـ properties، وإن فشلت أو رجعت فارغة نجرب get (القديم) */
-  const actions = [CONFIG.LIST_ACTION, "get"].filter((a, i, arr) => a && arr.indexOf(a) === i);
-  let list = [], lastErr = null;
-  for (const act of actions){
-    try { list = await fetchOnce(act); if (list.length) break; }
-    catch(e){ lastErr = e; console.warn("list action failed:", act, e); }
+  /* جلب العقارات من داخل اللوحة: يُرفق admin_key (يُطلب مرة واحدة إن لم يكن محفوظاً) */
+  const k = await ensureKey();
+  const payload = { action: CONFIG.LIST_ACTION };
+  if (k) payload.admin_key = k;
+  let data;
+  try { data = await api(payload); }
+  catch(e){
+    if (e.status === 401 || e.status === 403){ clearKey(); throw new Error("مفتاح الأمان غير صحيح. اضغط إعادة المحاولة لإدخاله من جديد."); }
+    throw e;
   }
-  if (!list.length && lastErr) throw lastErr;
+  if (isAuthFail(data)){ clearKey(); throw new Error("مفتاح الأمان غير صحيح. اضغط إعادة المحاولة لإدخاله من جديد."); }
+  console.log("list response (" + payload.action + ", key " + (k ? "sent" : "not sent") + "):", data);
+  const list = Array.from(extractRows(data)).map(normalize).filter(r => r.unit_code || r.unit_type || r.location || r.total_price);
+  console.log("rows extracted:", list.length);
   /* ترتيب تنازلي بآخر تحديث (الأحدث أولاً) مع ثبات الترتيب الأصلي عند التساوي */
   return list.map((r, i) => ({ r, i })).sort((a, b) => (ts(b.r.last_updated) - ts(a.r.last_updated)) || (a.i - b.i)).map(x => x.r);
 }
@@ -573,7 +570,7 @@ async function save(){
 
 /* ---------- الأحداث ---------- */
 $("btnAdd").onclick = () => openModal();
-$("btnRefresh").onclick = () => { load(); loadSubscription(); };
+$("btnRefresh").onclick = () => load().then(loadSubscription);
 $("btnCancel").onclick = closeModal;
 $("btnSave").onclick = save;
 $("btnPick").onclick = () => $("files").click();
@@ -609,7 +606,7 @@ $("list").addEventListener("click", async e => {
       /* إرسال جميع بيانات العقار الحالية مع last_updated حتى لا تصل أي خانة undefined */
       const payload = fullPayload("move_top", Object.assign({}, r, { last_updated: Date.now() }), code);
       console.log("move_top payload (" + Object.keys(payload).length + " keys):\n" + JSON.stringify(payload, null, 2));
-      await api(payload);
+      await secureApi(payload); /* يُرفق admin_key لأن الـ IF في n8n يشترطه لغير properties */
       toast("تم رفع الوحدة للأعلى"); await load();
     } catch(err){ toast(err.message, true); }
   }
@@ -619,8 +616,7 @@ fillSelect($("section"), SECTIONS);
 fillSelect($("status"), STATUSES);
 $("fSec").insertAdjacentHTML("beforeend", SECTIONS.map(v => '<option>' + v + '</option>').join(""));
 $("fSt").insertAdjacentHTML("beforeend", STATUSES.map(v => '<option>' + v + '</option>').join(""));
-load();
-loadSubscription();
+load().then(loadSubscription);
 </script>
 </body>
 </html>
